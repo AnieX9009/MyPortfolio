@@ -110,6 +110,7 @@ export type ProjectItem = {
   tech: string[];
   type: 'work' | 'lab';
   mediaUrl: string;
+  images?: string[];
   live?: string;
   source?: string;
   // Legacy optional fields for old components
@@ -118,16 +119,45 @@ export type ProjectItem = {
 
 export const projectsData: ProjectItem[] = [
   {
-    id: 'crumble-verover',
-    title: 'Crumble, Verover',
-    subtitle: 'ANDROID APP — LIVE PROJECT',
+    id: 'carbon-offset',
+    title: 'CARBON - OFFSET',
+    subtitle: 'FINANCIAL & ECOLOGICAL WEB APP',
     description:
-      'Developed UI using React Native and FormHook with TypeScript. Built robust backend using Node.js, MongoDB, and integrated APIs.',
+      'With user-centered approach, the goals was to create an intuitive interface for effortless financial management while incorporating gamification.',
+    category: 'Web Application / Gamification',
+    tech: ['React Vite', 'TypeScript', 'Tailwind CSS', 'Shadcn', 'Node.js'],
+    type: 'work',
+    mediaUrl: 'https://res.cloudinary.com/deitdqyiw/image/upload/v1787829225/Untitled_design_ajdktx.png',
+    images: [
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1787829225/Untitled_design_ajdktx.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1787829781/Screenshot_2026-08-27_at_4.51.22_PM_qnaiwk.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1787829781/Screenshot_2026-08-27_at_4.52.12_PM_dyzids.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1787829780/Screenshot_2026-08-27_at_4.50.57_PM_zomvqc.png',
+    ],
+    live: 'https://carbon-frontend-bice.vercel.app',
+    source: 'https://github.com/AnieX9009/Carbon-Frontend',
+    color: '#84cc16',
+  },
+  {
+    id: 'crumble',
+    title: 'Crumble',
+    subtitle: 'MOBILE APPLICATION — LIVE PROJECT',
+    description:
+      'Crumble is an all-in-one food delivery ecosystem designed to seamlessly connect customers, restaurants, and delivery partners.\n\nCustomer Order App: Browse local menus, discover daily discounts, customize dishes, and track deliveries in real time with an intuitive, user-friendly interface.\n\nRestaurant Side App: Streamline kitchen operations with live order management, real-time inventory and ingredient tracking, and dynamic menu updates.\n\nDelivery Partner App: Optimize fulfillment through AI-powered route navigation, instant order acceptance, real-time earnings tracking, and direct customer communication.',
     category: 'Mobile App / React Native',
     tech: ['React Native', 'TypeScript', 'Redux', 'MongoDB', 'FormHook', 'Node.js'],
     type: 'work',
-    mediaUrl: 'https://media.mathis-biabiany.fr/X6RqMejrO-MZjQ69_Header-image.webp',
-    live: '#',
+    mediaUrl: 'https://res.cloudinary.com/deitdqyiw/image/upload/v1788760690/Gemini_Generated_Image_j74w2yj74w2yj74w_w59n3b.png',
+    images: [
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1788760690/Gemini_Generated_Image_j74w2yj74w2yj74w_w59n3b.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1788760909/Gemini_Generated_Image_71p81871p81871p8_dtptx6.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1788760690/Gemini_Generated_Image_pgzueipgzueipgzu_bks497.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1788760690/Gemini_Generated_Image_pgzueipgzueipgzu_bks497.png',
+      'https://res.cloudinary.com/deitdqyiw/image/upload/v1788760693/Gemini_Generated_Image_kufmb7kufmb7kufm_icpnxc.png',
+    ],
+    live: 'https://www.figma.com/design/ST8TfsE8IYJqhdBK02lVto/Crumble-App?node-id=1-7273&t=LLBFZvkF5nFfcPf0-0',
+    source: 'https://github.com/AnieX9009/Crumble_User.git',
+    color: '#E65A2B',
   },
   {
     id: 'currency-converter',
@@ -139,7 +169,12 @@ export const projectsData: ProjectItem[] = [
     tech: ['HTML', 'CSS', 'JavaScript', 'REST API'],
     type: 'work',
     mediaUrl: 'https://media.mathis-biabiany.fr/GGBpSMS-rU0nKze6_Alone_With_Me_01.webp',
-    source: '#',
+    images: [
+      'https://media.mathis-biabiany.fr/GGBpSMS-rU0nKze6_Alone_With_Me_01.webp',
+    ],
+    live: 'https://github.com/animeshmondal',
+    source: 'https://github.com/animeshmondal/currency-converter',
+    color: '#6366f1',
   },
   {
     id: 'file-sharing-app',
@@ -151,7 +186,12 @@ export const projectsData: ProjectItem[] = [
     tech: ['React.js', 'Tailwind CSS', 'Firebase', 'Clerk', 'Node.js'],
     type: 'work',
     mediaUrl: 'https://media.mathis-biabiany.fr/Txd5RqLE_BYq_5iA_West_Lafayette_01.webp',
-    source: '#',
+    images: [
+      'https://media.mathis-biabiany.fr/Txd5RqLE_BYq_5iA_West_Lafayette_01.webp',
+    ],
+    live: 'https://github.com/animeshmondal',
+    source: 'https://github.com/animeshmondal/file-sharing-app',
+    color: '#06b6d4',
   },
 ];
 

@@ -4,22 +4,22 @@ import { projectsData } from '../data/portfolio';
 
 interface Project3DLaptopShowcaseProps {
   onHoverArtwork?: (url: string | null) => void;
+  onSelectProject?: (id: string) => void;
 }
 
-const displayProjects = [
-  { ...projectsData[0], tag: 'React Native', author: 'Animesh Mondal' },
-  { ...(projectsData[1] || projectsData[0]), tag: 'Frontend Web', author: 'Animesh Mondal' },
-  { ...(projectsData[2] || projectsData[0]), tag: 'Full-Stack Firebase', author: 'Animesh Mondal' },
-  { ...projectsData[0], tag: 'Gen AI & ML', author: 'Animesh Mondal' },
-  { ...(projectsData[1] || projectsData[0]), tag: 'WebGL & 3D', author: 'Animesh Mondal' },
-];
+const displayProjects = projectsData.map((proj) => ({
+  ...proj,
+  tag: proj.tech[0] || 'Web App',
+  author: 'Animesh Mondal',
+}));
 
 const FannedCard: React.FC<{
   proj: typeof displayProjects[0];
   index: number;
   progress: MotionValue<number>;
   onHoverArtwork?: (url: string | null) => void;
-}> = ({ proj, index, progress, onHoverArtwork }) => {
+  onSelectProject?: (id: string) => void;
+}> = ({ proj, index, progress, onHoverArtwork, onSelectProject }) => {
   // Continuous offset calculation: (index - progress)
   const offset = useTransform(progress, (p) => index - p);
 
@@ -31,6 +31,10 @@ const FannedCard: React.FC<{
   const scale = useTransform(offset, (o) => Math.max(0.82, 1.08 - Math.abs(o) * 0.1));
   const opacity = useTransform(offset, (o) => Math.max(0.35, 1 - Math.abs(o) * 0.3));
   const zIndex = useTransform(offset, (o) => Math.round(20 - Math.abs(o)));
+
+  const handleCardClick = () => {
+    onSelectProject?.(proj.id);
+  };
 
   return (
     <motion.div
@@ -47,14 +51,15 @@ const FannedCard: React.FC<{
       }}
       onMouseEnter={() => onHoverArtwork?.(proj.mediaUrl)}
       onMouseLeave={() => onHoverArtwork?.(null)}
-      className="cursor-pointer w-44 sm:w-56 p-3.5 sm:p-4 rounded-2xl border transition-shadow duration-300 bg-[#1B1617] text-white border-[#E65A2B] shadow-[0_25px_60px_rgba(0,0,0,0.3)] ring-1 ring-[#E65A2B]/40"
+      onClick={handleCardClick}
+      className="cursor-pointer w-44 sm:w-56 p-3.5 sm:p-4 rounded-2xl border transition-shadow duration-300 bg-[#1B1617] text-white border-[#E65A2B] shadow-[0_25px_60px_rgba(0,0,0,0.3)] ring-1 ring-[#E65A2B]/40 group"
     >
       {/* Card Thumbnail Image */}
       <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-3 bg-[#202022]/20">
         <img
           src={proj.mediaUrl}
           alt={proj.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute top-2 left-2 px-2.5 py-0.5 rounded-md bg-[#202022]/85 backdrop-blur-md text-[9px] font-mono font-bold text-[#F3F1EA]">
           {proj.tag}
@@ -63,30 +68,37 @@ const FannedCard: React.FC<{
 
       {/* Card Info */}
       <div className="text-center">
-        <div className="text-xs sm:text-sm font-extrabold truncate">
+        <div className="text-xs sm:text-sm font-extrabold truncate group-hover:text-[#E65A2B] transition-colors">
           {proj.title}
         </div>
         <div className="text-[10px] font-mono mt-0.5 text-gray-300 truncate">
           {proj.author}
         </div>
 
-        <button className="mt-2.5 w-full py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-[#E65A2B] text-white shadow-md hover:bg-[#d84e20] transition-colors">
-          GET STARTED ▶
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCardClick();
+          }}
+          className="mt-2.5 w-full py-1.5 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider bg-[#E65A2B] text-white shadow-md hover:bg-[#d84e20] transition-colors flex items-center justify-center gap-1"
+        >
+          <span>EXPLORE DETAILS</span>
+          <span className="text-[10px]">↓</span>
         </button>
       </div>
     </motion.div>
   );
 };
 
-export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = ({ onHoverArtwork }) => {
+export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = ({ onHoverArtwork, onSelectProject }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Device tilt spring physics
   const springX = useSpring(0, { stiffness: 50, damping: 22 });
   const springY = useSpring(0, { stiffness: 50, damping: 22 });
 
-  // Ultra-smooth continuous card carousel progress (0.0 to 4.0)
-  const carouselProgressRaw = useSpring(2, { stiffness: 45, damping: 20, mass: 0.6 });
+  // Ultra-smooth continuous card carousel progress
+  const carouselProgressRaw = useSpring(0, { stiffness: 45, damping: 20, mass: 0.6 });
 
   const rotateY = useTransform(springX, [-600, 600], [-10, 10]);
   const rotateX = useTransform(springY, [-600, 600], [6, -6]);
@@ -103,9 +115,10 @@ export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = (
       springX.set(e.clientX - cx);
       springY.set(e.clientY - cy);
 
-      // Smoothly map mouse position (0 -> 1) to continuous carousel index (0.0 -> 4.0)
+      // Smoothly map mouse position (0 -> 1) to continuous carousel index
       if (relativeX >= -0.1 && relativeX <= 1.1) {
-        const continuousIndex = Math.min(4, Math.max(0, relativeX * 4));
+        const maxIndex = Math.max(0, displayProjects.length - 1);
+        const continuousIndex = Math.min(maxIndex, Math.max(0, relativeX * maxIndex));
         carouselProgressRaw.set(continuousIndex);
       }
     };
@@ -163,7 +176,7 @@ export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = (
               Best Craft For Your Vision
             </h3>
             <p className="text-xs sm:text-sm text-[#77756F] font-sans leading-relaxed">
-              Move your mouse left & right to glide smoothly through featured 3D projects.
+              Move your mouse left & right to glide smoothly through featured 3D projects. Click any project to scroll down to full details.
             </p>
           </div>
 
@@ -181,6 +194,7 @@ export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = (
                 index={idx}
                 progress={carouselProgressRaw}
                 onHoverArtwork={onHoverArtwork}
+                onSelectProject={onSelectProject}
               />
             ))}
           </div>

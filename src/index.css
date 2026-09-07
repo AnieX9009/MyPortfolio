@@ -91,11 +91,21 @@
 
 /* Custom Cursor (Desktop Only) */
 @media (pointer: fine) {
-  body {
-    cursor: none;
+  *, *::before, *::after {
+    cursor: none !important;
   }
-  a, button, input, textarea {
-    cursor: none;
+
+  /* When inside an element with normal cursor mode (e.g., active project card) */
+  [data-normal-cursor],
+  [data-normal-cursor] * {
+    cursor: default !important;
+  }
+
+  [data-normal-cursor] a,
+  [data-normal-cursor] button,
+  [data-normal-cursor] [role="button"],
+  [data-normal-cursor] .cursor-pointer {
+    cursor: pointer !important;
   }
 }
 
@@ -118,6 +128,25 @@
   width: 48px;
   height: 48px;
   background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Button Light Beam Shine Effect */
+@keyframes button-shine-sweep {
+  0% {
+    transform: translateX(-160%) skewX(-20deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(280%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+.group\/btn:hover .btn-shine-beam {
+  animation: button-shine-sweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Fixed Canvas Backdrop */
