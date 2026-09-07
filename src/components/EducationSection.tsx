@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { educationData, languagesData } from '../data/portfolio';
 
 // Academic descriptions for the milestones
@@ -11,6 +11,40 @@ const educationDescriptions = [
 
 export const EducationSection: React.FC = () => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [autoActiveStep, setAutoActiveStep] = useState(0);
+
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(sectionRef, { once: false, margin: "-80px" });
+
+  // Scroll-linked progression
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 75%", "center 35%"],
+  });
+
+  // Transform scroll progress to line stroke length (0 to 1)
+  const scrollPathLength = useTransform(scrollYProgress, [0.05, 0.9], [0.05, 1]);
+
+  // Timed sequential progression when scrolled into view (1 -> 2 -> 3)
+  useEffect(() => {
+    if (!isInView) {
+      setAutoActiveStep(0);
+      return;
+    }
+
+    // Sequentially highlight points 1, 2, and 3
+    const t1 = setTimeout(() => setAutoActiveStep(0), 200);   // Step 1
+    const t2 = setTimeout(() => setAutoActiveStep(1), 1200);  // Step 2
+    const t3 = setTimeout(() => setAutoActiveStep(2), 2200);  // Step 3
+    const t4 = setTimeout(() => setAutoActiveStep(3), 3200);  // All highlighted
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
+    };
+  }, [isInView]);
 
   // Desktop SVG Path for the undulating orange wave
   // Starts on left at (20, 200), dips into Node 1 at (160, 270), sweeps into Node 2 at (490, 210), climbs to Node 3 at (810, 80), trails off to (930, 65)
@@ -25,15 +59,15 @@ export const EducationSection: React.FC = () => {
 
   return (
     <section
+      ref={sectionRef}
       id="education"
       className="relative py-24 sm:py-32 px-4 sm:px-8 lg:px-12 max-w-[1440px] mx-auto select-none overflow-hidden"
     >
-      {/* Ambient background decorative circle (matching top-right in reference image) */}
+      {/* Ambient background decorative circle */}
       <div className="absolute right-[-80px] top-[100px] w-[340px] sm:w-[460px] h-[340px] sm:h-[460px] rounded-full bg-gradient-to-br from-[#E65A2B]/10 via-[#3B82F6]/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* ════════════════════════════════════════════════════════════════════════
           TOP MAIN CONTAINER: LEFT HEADLINE + RIGHT ANIMATED ORANGE WAVE TIMELINE
-          (Direct match to reference image composition & flow)
          ════════════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-8 mb-28">
 
@@ -51,7 +85,7 @@ export const EducationSection: React.FC = () => {
             <span>ACADEMIC FOUNDATION</span>
           </motion.div>
 
-          {/* Main Headline matching reference typography */}
+          {/* Main Headline */}
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -59,7 +93,7 @@ export const EducationSection: React.FC = () => {
             transition={{ duration: 0.7, delay: 0.1 }}
             className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#111827] tracking-tight leading-[1.12] mb-5"
           >
-            Proven roots and continuous academic growth
+            MY EDUCATION
           </motion.h2>
 
           {/* Subtitle / Narrative */}
@@ -73,7 +107,7 @@ export const EducationSection: React.FC = () => {
             From strong school fundamentals in science and mathematics to graduating in Computer Science Engineering with an 8.5 GPA, each milestone has built the rigorous foundation for scalable software development.
           </motion.p>
 
-          {/* Orange CTA Button (Matching "Get Started" in reference image) */}
+          {/* Orange CTA Button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -112,29 +146,50 @@ export const EducationSection: React.FC = () => {
               </linearGradient>
             </defs>
 
-            {/* 1. Ambient Glow Trail */}
+            {/* 1. Ambient Background Guide Trail */}
             <path
+              d={desktopWavePath}
+              fill="none"
+              stroke="#E65A2B"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.15"
+            />
+
+            {/* 2. Scroll-Linked / In-View Animated Orange Glow Path */}
+            <motion.path
               d={desktopWavePath}
               fill="none"
               stroke="#E65A2B"
               strokeWidth="12"
               strokeLinecap="round"
               strokeLinejoin="round"
-              opacity="0.22"
+              opacity="0.28"
               filter="url(#orange-glow)"
+              style={{ pathLength: scrollPathLength }}
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
             />
 
-            {/* 2. Solid Crisp Orange Connecting Path (100% Visible & Clear!) */}
-            <path
+            {/* 3. Primary Crisp Animated Orange Stroke */}
+            <motion.path
               d={desktopWavePath}
               fill="none"
               stroke="url(#waveGrad)"
               strokeWidth="4"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ pathLength: scrollPathLength }}
+              initial={{ pathLength: 0 }}
+              whileInView={{ pathLength: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
             />
 
-            {/* 3. Smooth animated drawing highlight overlay */}
+            {/* 4. Active Glowing Energy Light Beam */}
             <motion.path
               d={desktopWavePath}
               fill="none"
@@ -144,43 +199,66 @@ export const EducationSection: React.FC = () => {
               strokeDasharray="24 160"
               initial={{ strokeDashoffset: 400 }}
               animate={{ strokeDashoffset: 0 }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-              opacity="0.6"
+              transition={{ duration: 3.5, repeat: Infinity, ease: "linear" }}
+              opacity="0.75"
             />
 
-            {/* 3 Node Markers Drawn Directly On the SVG Curve */}
+            {/* 3 Node Markers Drawn Directly On the SVG Curve (Sequentially Highlighted 1 -> 2 -> 3) */}
             {desktopNodes.map((node, i) => {
               const isHovered = hoveredIdx === i;
+              const isStepActive = isHovered || autoActiveStep >= i;
 
               return (
-                <g key={i} className="cursor-pointer">
+                <g
+                  key={i}
+                  className="cursor-pointer transition-all duration-500"
+                  onMouseEnter={() => setHoveredIdx(i)}
+                  onMouseLeave={() => setHoveredIdx(null)}
+                >
                   {/* Outer Pulsing Aura Ring */}
-                  <circle
+                  <motion.circle
                     cx={node.x}
                     cy={node.y}
-                    r={isHovered ? 20 : 15}
+                    r={isStepActive ? 22 : 14}
                     fill="#E65A2B"
-                    fillOpacity={isHovered ? 0.3 : 0.15}
-                    className="transition-all duration-300"
+                    fillOpacity={isStepActive ? 0.35 : 0.12}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.7, duration: 0.6 }}
                   />
+
+                  {/* Beacon Ping Ring (when active) */}
+                  {isStepActive && (
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r="26"
+                      fill="none"
+                      stroke="#E65A2B"
+                      strokeWidth="1.5"
+                      opacity="0.5"
+                      className="animate-ping origin-center"
+                    />
+                  )}
 
                   {/* White Outer Ring Container with Shadow */}
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r="10.5"
+                    r={isStepActive ? "12" : "10"}
                     fill="#FFFFFF"
                     stroke="#E65A2B"
-                    strokeWidth="3"
-                    className="transition-all duration-300 shadow-sm"
+                    strokeWidth={isStepActive ? "3.5" : "2.5"}
+                    className="transition-all duration-300 shadow-md"
                   />
 
                   {/* Inner Solid Center Dot */}
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r={isHovered ? "5.5" : "4"}
-                    fill={isHovered ? "#E65A2B" : "#111827"}
+                    r={isStepActive ? "6" : "4"}
+                    fill={isStepActive ? "#E65A2B" : "#111827"}
                     className="transition-all duration-300"
                   />
                 </g>
@@ -193,6 +271,7 @@ export const EducationSection: React.FC = () => {
             {educationData.map((edu, idx) => {
               const node = desktopNodes[idx];
               const isHovered = hoveredIdx === idx;
+              const isStepActive = isHovered || autoActiveStep >= idx;
               const stepNumber = idx + 1;
 
               return (
@@ -203,41 +282,55 @@ export const EducationSection: React.FC = () => {
                     top: node.cardTop,
                     transform: 'translate(-50%, 0)',
                   }}
-                  className="absolute w-[240px] pointer-events-auto group"
+                  className="absolute w-[245px] pointer-events-auto group"
                   onMouseEnter={() => setHoveredIdx(idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
                 >
-                  {/* Giant Faint Background Number (1, 2, 3) Matching Reference Graphic */}
-                  <div
+                  {/* Giant Faint Background Number (1, 2, 3) with Scroll/Hover Highlight */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + idx * 0.7, duration: 0.6 }}
                     className={`absolute -top-14 -right-2 text-[115px] font-black font-sans select-none pointer-events-none leading-none transition-all duration-500 ${
-                      isHovered
-                        ? 'text-[#E65A2B]/22 scale-105'
-                        : 'text-gray-200/75'
+                      isStepActive
+                        ? 'text-[#E65A2B]/28 scale-105'
+                        : 'text-gray-200/70'
                     }`}
                   >
                     {stepNumber}
-                  </div>
+                  </motion.div>
 
                   {/* Milestone Card Content */}
                   <motion.div
-                    initial={{ opacity: 0, y: 25 }}
+                    initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.7, delay: 0.2 + idx * 0.18 }}
-                    className="relative z-10 pt-2"
+                    transition={{ duration: 0.7, delay: 0.3 + idx * 0.7 }}
+                    className={`relative z-10 pt-2 p-3 rounded-2xl transition-all duration-500 ${
+                      isStepActive
+                        ? 'bg-white/90 backdrop-blur-xs shadow-[0_8px_30px_rgba(230,90,43,0.08)] border border-[#E65A2B]/30 translate-y-[-4px]'
+                        : 'bg-transparent border border-transparent'
+                    }`}
                   >
                     {/* Period & Score Header Pills */}
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#77756F] bg-gray-100/90 px-2.5 py-0.5 rounded-full border border-gray-200/80 shadow-xs">
                         {edu.period}
                       </span>
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#E65A2B]/10 text-[#E65A2B] border border-[#E65A2B]/20">
+                      <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full transition-colors duration-300 ${
+                        isStepActive
+                          ? 'bg-[#E65A2B] text-white shadow-xs'
+                          : 'bg-[#E65A2B]/10 text-[#E65A2B] border border-[#E65A2B]/20'
+                      }`}>
                         {edu.gpa}
                       </span>
                     </div>
 
                     {/* Degree Title */}
-                    <h3 className="text-base font-extrabold font-sans text-[#111827] group-hover:text-[#E65A2B] transition-colors duration-300 leading-snug mb-1">
+                    <h3 className={`text-base font-extrabold font-sans leading-snug mb-1 transition-colors duration-300 ${
+                      isStepActive ? 'text-[#E65A2B]' : 'text-[#111827]'
+                    }`}>
                       {edu.degree}
                     </h3>
 
@@ -260,12 +353,13 @@ export const EducationSection: React.FC = () => {
         {/* ── RESPONSIVE MOBILE / TABLET FLOW (< LG) ── */}
         <div className="block lg:hidden w-full relative">
           <div className="relative pl-6 sm:pl-10 space-y-12">
-            
+
             {/* Continuous Vertical Curved Path on Left */}
             <div className="absolute left-[15px] sm:left-[23px] top-4 bottom-4 w-1 rounded-full bg-gradient-to-b from-[#E65A2B] via-[#FF7A45] to-[#E65A2B]/30 shadow-[0_0_12px_rgba(230,90,43,0.4)]" />
 
             {educationData.map((edu, idx) => {
               const stepNumber = idx + 1;
+              const isStepActive = autoActiveStep >= idx;
 
               return (
                 <motion.div
@@ -273,16 +367,26 @@ export const EducationSection: React.FC = () => {
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: idx * 0.15 }}
-                  className="relative group bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] hover:border-[#E65A2B]/40 transition-all duration-300"
+                  transition={{ duration: 0.6, delay: idx * 0.4 }}
+                  className={`relative group bg-white p-5 sm:p-6 rounded-2xl border transition-all duration-300 ${
+                    isStepActive
+                      ? 'border-[#E65A2B]/50 shadow-[0_12px_32px_rgba(230,90,43,0.12)]'
+                      : 'border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+                  }`}
                 >
                   {/* Glowing Node on the Vertical Line */}
-                  <div className="absolute -left-[30px] sm:-left-[46px] top-6 w-7 h-7 rounded-full bg-white border-2 border-[#E65A2B] shadow-md flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#E65A2B] group-hover:scale-125 transition-transform" />
+                  <div className={`absolute -left-[30px] sm:-left-[46px] top-6 w-7 h-7 rounded-full bg-white border-2 transition-colors duration-300 flex items-center justify-center ${
+                    isStepActive ? 'border-[#E65A2B] shadow-md' : 'border-gray-300'
+                  }`}>
+                    <div className={`w-2.5 h-2.5 rounded-full transition-transform duration-300 ${
+                      isStepActive ? 'bg-[#E65A2B] scale-125' : 'bg-gray-400'
+                    }`} />
                   </div>
 
                   {/* Giant Faint Number Background */}
-                  <div className="absolute right-4 top-2 text-7xl font-black font-sans text-gray-100/90 pointer-events-none select-none">
+                  <div className={`absolute right-4 top-2 text-7xl font-black font-sans pointer-events-none select-none transition-colors duration-300 ${
+                    isStepActive ? 'text-[#E65A2B]/20' : 'text-gray-100/90'
+                  }`}>
                     {stepNumber}
                   </div>
 
@@ -292,12 +396,16 @@ export const EducationSection: React.FC = () => {
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#77756F] bg-gray-100 px-2.5 py-0.5 rounded-full border border-gray-200">
                         {edu.period}
                       </span>
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#E65A2B]/10 text-[#E65A2B] border border-[#E65A2B]/20">
+                      <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full transition-colors duration-300 ${
+                        isStepActive ? 'bg-[#E65A2B] text-white' : 'bg-[#E65A2B]/10 text-[#E65A2B] border border-[#E65A2B]/20'
+                      }`}>
                         {edu.gpa}
                       </span>
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-extrabold font-sans text-[#111827] group-hover:text-[#E65A2B] transition-colors mb-1">
+                    <h3 className={`text-base sm:text-lg font-extrabold font-sans transition-colors mb-1 ${
+                      isStepActive ? 'text-[#E65A2B]' : 'text-[#111827]'
+                    }`}>
                       {edu.degree}
                     </h3>
 
