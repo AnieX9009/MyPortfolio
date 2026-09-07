@@ -292,9 +292,8 @@ export const SkillsSection: React.FC = () => {
               whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.65, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -8, scale: 1.01 }}
-              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
-              className={`group relative p-7 rounded-2xl bg-[#1B1617] text-white border border-white/10 ${tool.borderColor} transition-all duration-500 shadow-xl overflow-hidden flex flex-col justify-between min-h-[260px]`}
+              style={{ willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+              className={`group relative p-7 rounded-2xl bg-[#1B1617] text-white border border-white/10 ${tool.borderColor} hover:-translate-y-2 transition-[border-color,transform,box-shadow] duration-300 ease-out shadow-xl overflow-hidden flex flex-col justify-between min-h-[260px]`}
             >
               {/* Subtle Gradient Background Effect on hover */}
               <div className={`absolute inset-0 bg-gradient-to-br ${tool.color} opacity-30 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
