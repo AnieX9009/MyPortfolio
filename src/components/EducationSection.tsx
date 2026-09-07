@@ -458,8 +458,13 @@ export const EducationSection: React.FC = () => {
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.65, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -5 }}
-              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
-              className="group p-6 bg-white rounded-2xl border border-gray-200/80 hover:border-[#E65A2B]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition-all duration-300 flex flex-col justify-between"
+              style={{
+                willChange: 'transform',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                contain: 'layout',
+              }}
+              className="group p-6 bg-white rounded-2xl border border-gray-200/80 hover:border-[#E65A2B]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition-[border-color,box-shadow,transform] duration-300 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -486,7 +491,8 @@ export const EducationSection: React.FC = () => {
                     initial={{ width: 0 }}
                     whileInView={{ width: `${lang.percentage}%` }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, ease: 'easeOut', delay: idx * 0.15 }}
+                    transition={{ duration: 1.1, ease: 'easeOut', delay: 0.2 + idx * 0.15 }}
+                    style={{ willChange: 'width', contain: 'strict' }}
                     className="h-full bg-gradient-to-r from-[#E65A2B] to-[#FF8C38] rounded-full"
                   />
                 </div>
