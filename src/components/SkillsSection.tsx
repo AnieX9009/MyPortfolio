@@ -96,10 +96,10 @@ export const SkillsSection: React.FC = () => {
       {/* Section Header */}
       <div className="mb-14">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, x: -28, filter: 'blur(4px)' }}
+          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          viewport={{ once: false, margin: '-60px' }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           className="flex items-center gap-2.5 text-xs font-mono font-bold uppercase tracking-widest text-[#E65A2B] mb-3"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-[#E65A2B] inline-block animate-pulse" />
@@ -107,10 +107,10 @@ export const SkillsSection: React.FC = () => {
         </motion.div>
 
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.1 }}
+          initial={{ opacity: 0, scale: 1.3, filter: 'blur(8px)' }}
+          whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          viewport={{ once: false, margin: '-60px' }}
+          transition={{ duration: 0.88, ease: [0.16, 1, 0.3, 1], delay: 0.09 }}
           className="text-4xl sm:text-6xl font-extrabold text-[#202022] uppercase tracking-tight leading-none"
         >
           SKILLS & EXPERTISE.
@@ -121,10 +121,10 @@ export const SkillsSection: React.FC = () => {
           FEATURED GEN AI RECRUITER SPOTLIGHT BANNER (Eye-Catching UI)
          ════════════════════════════════════════════════════════════════════════ */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, y: 50, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: false, margin: '-60px' }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
         whileHover={{ scale: 1.01 }}
         className="relative mb-16 p-1 rounded-3xl bg-gradient-to-r from-violet-600 via-amber-500 to-emerald-500 shadow-2xl overflow-hidden group"
       >
@@ -185,10 +185,10 @@ export const SkillsSection: React.FC = () => {
           return (
             <motion.div
               key={cat.category}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.6, delay: idx * 0.12 }}
+              initial={{ opacity: 0, y: 40, scale: 0.95, filter: 'blur(4px)' }}
+              whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.65, delay: idx * 0.13, ease: [0.16, 1, 0.3, 1] }}
               className={`flex flex-col p-7 rounded-2xl border transition-all duration-300 ${
                 isGenAI
                   ? 'bg-gradient-to-b from-[#1c1c1e] to-[#202022] border-amber-500/40 text-white shadow-xl hover:border-amber-400'
@@ -248,10 +248,10 @@ export const SkillsSection: React.FC = () => {
         <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+              whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center gap-2.5 text-xs font-mono font-bold uppercase tracking-widest text-[#E65A2B] mb-2"
             >
               <span className="w-2.5 h-2.5 rounded-full bg-[#E65A2B] inline-block" />
@@ -259,10 +259,10 @@ export const SkillsSection: React.FC = () => {
             </motion.div>
             
             <motion.h3
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              initial={{ opacity: 0, scale: 1.25, filter: 'blur(7px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.09 }}
               className="text-3xl sm:text-5xl font-extrabold text-[#202022] uppercase tracking-tight"
             >
               UI/UX & DESIGN TOOLS.
@@ -270,9 +270,10 @@ export const SkillsSection: React.FC = () => {
           </div>
 
           <motion.span
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, margin: '-60px' }}
+            transition={{ duration: 0.55, delay: 0.15 }}
             className="text-xs font-mono text-[#77756F] uppercase tracking-wider max-w-xs"
           >
             HIGH-FIDELITY PROTOTYPING, GRAPHIC SUITE & WEB PLATFORMS
@@ -284,10 +285,10 @@ export const SkillsSection: React.FC = () => {
           {designToolsData.map((tool, idx) => (
             <motion.div
               key={tool.name}
-              initial={{ opacity: 0, y: 35 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: idx * 0.12 }}
+              initial={{ opacity: 0, y: 45, rotateX: 8, filter: 'blur(4px)' }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.65, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -8, scale: 1.01 }}
               className={`group relative p-7 rounded-2xl bg-[#1B1617] text-white border border-white/10 ${tool.borderColor} transition-all duration-500 shadow-xl overflow-hidden flex flex-col justify-between min-h-[260px]`}
             >

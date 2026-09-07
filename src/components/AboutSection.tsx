@@ -150,10 +150,10 @@ export const AboutSection: React.FC = () => {
 
       {/* ── Section label ── */}
       <motion.span
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7 }}
+        initial={{ opacity: 0, x: -20, filter: 'blur(4px)' }}
+        whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+        viewport={{ once: false, margin: '-60px' }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="text-xs font-mono uppercase tracking-widest text-[#77756F] block mb-6"
       >
         BIOGRAPHY // ABOUT

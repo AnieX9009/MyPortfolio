@@ -73,10 +73,10 @@ export const EducationSection: React.FC = () => {
             <div className="w-full lg:w-[32%] lg:max-w-md shrink-0">
               {/* Category Pill Tag */}
               <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+                initial={{ opacity: 0, x: -24, filter: 'blur(4px)' }}
+                whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                viewport={{ once: false, margin: '-60px' }}
+                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-[#E65A2B] mb-3"
               >
                 <span className="w-2 h-2 rounded-full bg-[#E65A2B] inline-block animate-pulse" />
@@ -85,10 +85,10 @@ export const EducationSection: React.FC = () => {
 
               {/* Main Headline */}
               <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: 0.1 }}
+                initial={{ opacity: 0, scale: 1.28, filter: 'blur(8px)' }}
+                whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                viewport={{ once: false, margin: '-60px' }}
+                transition={{ duration: 0.88, ease: [0.16, 1, 0.3, 1], delay: 0.09 }}
                 className="text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#111827] tracking-tight leading-[1.12] mb-4"
               >
                 MY EDUCATION
@@ -96,10 +96,10 @@ export const EducationSection: React.FC = () => {
 
               {/* Subtitle / Narrative */}
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: 0.2 }}
+                initial={{ opacity: 0, y: 18, filter: 'blur(3px)' }}
+                whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                viewport={{ once: false, margin: '-60px' }}
+                transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
                 className="text-xs sm:text-sm text-[#77756F] font-sans leading-relaxed mb-6"
               >
                 From strong school fundamentals in science and mathematics to graduating in Computer Science Engineering with an 8.5 GPA, each milestone has built the rigorous foundation for scalable software development.
@@ -107,10 +107,10 @@ export const EducationSection: React.FC = () => {
 
               {/* Orange CTA Button */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.7, delay: 0.3 }}
+                initial={{ opacity: 0, y: 18, scale: 0.96 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: false, margin: '-60px' }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.22 }}
               >
                 <a
                   href="#contact"
@@ -287,10 +287,10 @@ export const EducationSection: React.FC = () => {
 
                       {/* Milestone Card Content */}
                       <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.15 + idx * 0.2 }}
+                        initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
+                        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        viewport={{ once: false, margin: '-60px' }}
+                        transition={{ duration: 0.6, delay: 0.15 + idx * 0.2, ease: [0.16, 1, 0.3, 1] }}
                         className={`relative z-10 pt-2 p-3 rounded-2xl transition-all duration-500 ${
                           isPointReached
                             ? 'bg-white/95 backdrop-blur-xs shadow-[0_8px_30px_rgba(230,90,43,0.08)] border border-[#E65A2B]/35 translate-y-[-4px]'
@@ -348,10 +348,10 @@ export const EducationSection: React.FC = () => {
                   return (
                     <motion.div
                       key={edu.degree}
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: idx * 0.2 }}
+                      initial={{ opacity: 0, y: 18, filter: 'blur(3px)' }}
+                      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                      viewport={{ once: false, margin: '-60px' }}
+                      transition={{ duration: 0.6, delay: idx * 0.2, ease: [0.16, 1, 0.3, 1] }}
                       className={`relative group bg-white p-4 sm:p-5 rounded-2xl border transition-all duration-300 ${
                         isPointReached
                           ? 'border-[#E65A2B]/50 shadow-[0_12px_32px_rgba(230,90,43,0.12)]'
@@ -420,7 +420,7 @@ export const EducationSection: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: false, margin: '-60px' }}
               transition={{ duration: 0.6 }}
               className="flex items-center gap-2.5 text-xs font-mono font-bold uppercase tracking-widest text-[#E65A2B] mb-2"
             >
@@ -428,10 +428,10 @@ export const EducationSection: React.FC = () => {
               <span>COMMUNICATION & FLUENCY</span>
             </motion.div>
             <motion.h3
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              initial={{ opacity: 0, scale: 1.25, filter: 'blur(7px)' }}
+              whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.82, ease: [0.16, 1, 0.3, 1], delay: 0.09 }}
               className="text-2xl sm:text-3xl font-extrabold text-[#111827] uppercase tracking-tight"
             >
               LANGUAGES & PROFICIENCY
@@ -439,9 +439,9 @@ export const EducationSection: React.FC = () => {
           </div>
 
           <motion.span
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: false, margin: '-60px' }}
             className="text-xs font-mono text-[#77756F] uppercase tracking-wider"
           >
             CEFR FRAMEWORK STANDARDS
@@ -453,10 +453,10 @@ export const EducationSection: React.FC = () => {
           {languagesData.map((lang, idx) => (
             <motion.div
               key={lang.name}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: idx * 0.12 }}
+              initial={{ opacity: 0, y: 30, scale: 0.96, filter: 'blur(4px)' }}
+              whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-60px' }}
+              transition={{ duration: 0.65, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -5 }}
               className="group p-6 bg-white rounded-2xl border border-gray-200/80 hover:border-[#E65A2B]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition-all duration-300 flex flex-col justify-between"
             >

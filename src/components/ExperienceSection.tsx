@@ -26,12 +26,24 @@ export const ExperienceSection: React.FC = () => {
     >
       {/* Section Header */}
       <div className="mb-16 text-center sm:text-left">
-        <span className="text-xs font-mono uppercase tracking-widest text-[#77756F] block mb-2">
+        <motion.span
+          initial={{ opacity: 0, x: -24, filter: 'blur(4px)' }}
+          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          viewport={{ once: false, margin: '-60px' }}
+          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          className="text-xs font-mono uppercase tracking-widest text-[#77756F] block mb-2"
+        >
           CAREER FILES // DOSSIER
-        </span>
-        <h2 className="text-4xl sm:text-5xl font-extrabold text-[#202022] uppercase tracking-tight">
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, scale: 1.28, filter: 'blur(8px)' }}
+          whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          viewport={{ once: false, margin: '-60px' }}
+          transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1], delay: 0.08 }}
+          className="text-4xl sm:text-5xl font-extrabold text-[#202022] uppercase tracking-tight"
+        >
           Work Experience
-        </h2>
+        </motion.h2>
       </div>
 
       {/* SVG Connecting Path Layer */}
@@ -69,8 +81,12 @@ export const ExperienceSection: React.FC = () => {
           const isOpen = hoveredIdx === idx;
 
           return (
-            <div
+          <motion.div
               key={exp.company}
+              initial={{ opacity: 0, x: isEven ? -60 : 60, filter: 'blur(6px)' }}
+              whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              viewport={{ once: false, margin: '-80px' }}
+              transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: idx * 0.1 }}
               className={`flex flex-col md:flex-row items-center ${
                 isEven ? 'md:justify-start' : 'md:justify-end'
               }`}
@@ -190,7 +206,7 @@ export const ExperienceSection: React.FC = () => {
 
                 </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>

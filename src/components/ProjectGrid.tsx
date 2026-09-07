@@ -55,10 +55,10 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({ onHoverArtwork }) => {
       {/* ── 1. TOP SECTION HEADER ── */}
       <div className="mb-12 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, x: -30, filter: 'blur(4px)' }}
+          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+          viewport={{ once: false, margin: '-60px' }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="flex items-center justify-center gap-2.5 text-xs font-mono font-bold uppercase tracking-widest text-[#2DD4BF] mb-3"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-[#2DD4BF] inline-block animate-pulse" />
@@ -66,10 +66,10 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({ onHoverArtwork }) => {
         </motion.div>
 
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.1 }}
+          initial={{ opacity: 0, scale: 1.35, filter: 'blur(8px)' }}
+          whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          viewport={{ once: false, margin: '-60px' }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           className="text-4xl sm:text-6xl font-extrabold text-[#111827] uppercase tracking-tight leading-none"
         >
           SELECTED PROJECTS.

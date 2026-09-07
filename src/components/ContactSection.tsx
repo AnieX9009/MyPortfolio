@@ -8,10 +8,10 @@ export const ContactSection: React.FC = () => {
 
       {/* Invitation Text */}
       <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
+        initial={{ opacity: 0, y: 24, filter: 'blur(5px)' }}
+        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        viewport={{ once: false, margin: '-60px' }}
+        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
         className="text-center text-sm sm:text-base font-medium text-[#77756F] mb-16 max-w-2xl mx-auto"
       >
         If you've got something strange, epic or smooth you'd like to build, I'd love to hear about it.
@@ -19,10 +19,10 @@ export const ContactSection: React.FC = () => {
 
       {/* Prominent Two-Line Heading */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0, scale: 1.32, filter: 'blur(10px)' }}
+        whileInView={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+        viewport={{ once: false, margin: '-60px' }}
+        transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
         className="text-center mb-16"
       >
         <a
@@ -41,10 +41,10 @@ export const ContactSection: React.FC = () => {
 
       {/* Contact Details Row */}
       <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.2 }}
+        initial={{ opacity: 0, y: 30, filter: 'blur(4px)' }}
+        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        viewport={{ once: false, margin: '-60px' }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pt-12 border-t border-[#202022]/10 font-mono text-xs"
       >
         {/* Social / Contact Links */}
