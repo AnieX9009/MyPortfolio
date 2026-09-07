@@ -186,12 +186,16 @@ export const SkillsSection: React.FC = () => {
           return (
             <motion.div
               key={cat.category}
-              initial={{ opacity: 0, y: 40, scale: 0.95, filter: 'blur(4px)' }}
-              whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+              initial={{ opacity: 0, y: 48 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.65, delay: idx * 0.13, ease: [0.16, 1, 0.3, 1] }}
-              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
-              className={`flex flex-col p-7 rounded-2xl border transition-all duration-300 ${
+              transition={{ duration: 0.6, delay: idx * 0.13, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                willChange: 'transform, opacity',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+              }}
+              className={`flex flex-col p-7 rounded-2xl border transition-[border-color,box-shadow,background-color] duration-300 ${
                 isGenAI
                   ? 'bg-gradient-to-b from-[#1c1c1e] to-[#202022] border-amber-500/40 text-white shadow-xl hover:border-amber-400'
                   : 'bg-[#FBFBFA] border-[#202022]/10 hover:border-[#202022] hover:bg-white hover:shadow-xl text-[#202022]'
@@ -220,8 +224,8 @@ export const SkillsSection: React.FC = () => {
                   <motion.li
                     key={skill}
                     whileHover={{ x: 4 }}
-                    style={{ willChange: 'transform' }}
-                    className={`flex items-center gap-3 py-2 px-3.5 rounded-xl border transition-all ${
+                    style={{ willChange: 'transform', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                    className={`flex items-center gap-3 py-2 px-3.5 rounded-xl border transition-[border-color,background-color] duration-200 ${
                       isGenAI
                         ? 'bg-white/5 border-white/10 hover:border-amber-400/60 hover:bg-white/10 text-gray-100'
                         : 'bg-white border-[#202022]/10 hover:border-[#E65A2B]/40 text-[#202022]'
