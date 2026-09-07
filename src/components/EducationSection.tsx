@@ -287,11 +287,12 @@ export const EducationSection: React.FC = () => {
 
                       {/* Milestone Card Content */}
                       <motion.div
-                        initial={{ opacity: 0, y: 20, filter: 'blur(4px)' }}
-                        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                        viewport={{ once: false, margin: '-60px' }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-60px' }}
                         transition={{ duration: 0.6, delay: 0.15 + idx * 0.2, ease: [0.16, 1, 0.3, 1] }}
-                        className={`relative z-10 pt-2 p-3 rounded-2xl transition-all duration-500 ${
+                        style={{ willChange: 'transform, opacity', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                        className={`relative z-10 pt-2 p-3 rounded-2xl transition-[background-color,border-color,box-shadow,transform] duration-500 ${
                           isPointReached
                             ? 'bg-white/95 backdrop-blur-xs shadow-[0_8px_30px_rgba(230,90,43,0.08)] border border-[#E65A2B]/35 translate-y-[-4px]'
                             : 'bg-transparent border border-transparent'
@@ -348,11 +349,12 @@ export const EducationSection: React.FC = () => {
                   return (
                     <motion.div
                       key={edu.degree}
-                      initial={{ opacity: 0, y: 18, filter: 'blur(3px)' }}
-                      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                      viewport={{ once: false, margin: '-60px' }}
+                      initial={{ opacity: 0, y: 18 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: '-60px' }}
                       transition={{ duration: 0.6, delay: idx * 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className={`relative group bg-white p-4 sm:p-5 rounded-2xl border transition-all duration-300 ${
+                      style={{ willChange: 'transform, opacity', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                      className={`relative group bg-white p-4 sm:p-5 rounded-2xl border transition-[border-color,box-shadow] duration-300 ${
                         isPointReached
                           ? 'border-[#E65A2B]/50 shadow-[0_12px_32px_rgba(230,90,43,0.12)]'
                           : 'border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'

@@ -83,10 +83,11 @@ export const ExperienceSection: React.FC = () => {
           return (
           <motion.div
               key={exp.company}
-              initial={{ opacity: 0, x: isEven ? -60 : 60, filter: 'blur(6px)' }}
-              whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+              initial={{ opacity: 0, x: isEven ? -60 : 60 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: idx * 0.1 }}
+              style={{ willChange: 'transform, opacity', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
               className={`flex flex-col md:flex-row items-center ${
                 isEven ? 'md:justify-start' : 'md:justify-end'
               }`}
