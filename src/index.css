@@ -15,6 +15,20 @@
     padding: 0;
   }
 
+  /* ── GPU Anti-Flicker: Force hardware layer promotion on all animated elements ── */
+  [style*="transform"],
+  [style*="will-change"] {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Prevent subpixel rendering flicker on motion elements */
+  .motion-safe\:transform-gpu,
+  [class*="motion"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
   html {
     background-color: #F3F1EA;
     color: #202022;

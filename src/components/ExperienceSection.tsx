@@ -85,7 +85,7 @@ export const ExperienceSection: React.FC = () => {
               key={exp.company}
               initial={{ opacity: 0, x: isEven ? -60 : 60, filter: 'blur(6px)' }}
               whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-              viewport={{ once: false, margin: '-80px' }}
+              viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: idx * 0.1 }}
               className={`flex flex-col md:flex-row items-center ${
                 isEven ? 'md:justify-start' : 'md:justify-end'
@@ -94,6 +94,7 @@ export const ExperienceSection: React.FC = () => {
               {/* Compact 3D Orange Frosted Glass Folder Container (20% Shorter Height) */}
               <div
                 className="relative w-full md:w-[520px] pt-6 cursor-pointer perspective-1000"
+                style={{ transformStyle: 'preserve-3d', isolation: 'isolate' }}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() => setHoveredIdx(null)}
                 onClick={() => setHoveredIdx(isOpen ? null : idx)}
@@ -127,7 +128,12 @@ export const ExperienceSection: React.FC = () => {
                           }
                     }
                     transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                    className="relative w-full bg-white text-[#202022] rounded-xl p-5 sm:p-7 border border-[#202022]/15 shadow-2xl transition-all pointer-events-auto"
+                    style={{
+                      willChange: 'transform',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                    }}
+                    className="relative w-full bg-white text-[#202022] rounded-xl p-5 sm:p-7 border border-[#202022]/15 shadow-2xl pointer-events-auto"
                   >
                     {/* Top Document Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-[#202022]/10 mb-4">
@@ -169,6 +175,11 @@ export const ExperienceSection: React.FC = () => {
                   <motion.div
                     animate={isOpen ? { rotateX: -10, y: 6, opacity: 0.95 } : { rotateX: 0, y: 0, opacity: 1 }}
                     transition={{ duration: 0.35 }}
+                    style={{
+                      willChange: 'transform, opacity',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                    }}
                     className="absolute inset-x-0 bottom-0 top-6 z-20 bg-gradient-to-br from-orange-600/90 via-amber-600/85 to-orange-700/95 backdrop-blur-xl border border-orange-400/40 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col justify-between overflow-hidden origin-bottom pointer-events-none"
                   >
                     {/* Glass Surface Specular Reflection */}

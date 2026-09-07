@@ -126,6 +126,7 @@ export const SkillsSection: React.FC = () => {
         viewport={{ once: false, margin: '-60px' }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
         whileHover={{ scale: 1.01 }}
+        style={{ willChange: 'transform' }}
         className="relative mb-16 p-1 rounded-3xl bg-gradient-to-r from-violet-600 via-amber-500 to-emerald-500 shadow-2xl overflow-hidden group"
       >
         <div className="relative p-8 sm:p-10 bg-[#161618] rounded-[22px] text-white flex flex-col lg:flex-row lg:items-center justify-between gap-8">
@@ -187,8 +188,9 @@ export const SkillsSection: React.FC = () => {
               key={cat.category}
               initial={{ opacity: 0, y: 40, scale: 0.95, filter: 'blur(4px)' }}
               whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-              viewport={{ once: false, margin: '-60px' }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.65, delay: idx * 0.13, ease: [0.16, 1, 0.3, 1] }}
+              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
               className={`flex flex-col p-7 rounded-2xl border transition-all duration-300 ${
                 isGenAI
                   ? 'bg-gradient-to-b from-[#1c1c1e] to-[#202022] border-amber-500/40 text-white shadow-xl hover:border-amber-400'
@@ -218,6 +220,7 @@ export const SkillsSection: React.FC = () => {
                   <motion.li
                     key={skill}
                     whileHover={{ x: 4 }}
+                    style={{ willChange: 'transform' }}
                     className={`flex items-center gap-3 py-2 px-3.5 rounded-xl border transition-all ${
                       isGenAI
                         ? 'bg-white/5 border-white/10 hover:border-amber-400/60 hover:bg-white/10 text-gray-100'
@@ -287,9 +290,10 @@ export const SkillsSection: React.FC = () => {
               key={tool.name}
               initial={{ opacity: 0, y: 45, rotateX: 8, filter: 'blur(4px)' }}
               whileInView={{ opacity: 1, y: 0, rotateX: 0, filter: 'blur(0px)' }}
-              viewport={{ once: false, margin: '-60px' }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.65, delay: idx * 0.1, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -8, scale: 1.01 }}
+              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
               className={`group relative p-7 rounded-2xl bg-[#1B1617] text-white border border-white/10 ${tool.borderColor} transition-all duration-500 shadow-xl overflow-hidden flex flex-col justify-between min-h-[260px]`}
             >
               {/* Subtle Gradient Background Effect on hover */}

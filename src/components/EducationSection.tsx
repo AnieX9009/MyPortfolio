@@ -455,9 +455,10 @@ export const EducationSection: React.FC = () => {
               key={lang.name}
               initial={{ opacity: 0, y: 30, scale: 0.96, filter: 'blur(4px)' }}
               whileInView={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-              viewport={{ once: false, margin: '-60px' }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.65, delay: idx * 0.12, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -5 }}
+              style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
               className="group p-6 bg-white rounded-2xl border border-gray-200/80 hover:border-[#E65A2B]/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] transition-all duration-300 flex flex-col justify-between"
             >
               <div>
