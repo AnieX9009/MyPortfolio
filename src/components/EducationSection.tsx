@@ -9,38 +9,18 @@ const educationDescriptions = [
   'Comprehensive 4-year engineering curriculum focused on Data Structures, Algorithms, Full-Stack Architecture, and Machine Learning.',
 ];
 
-// Icons for academic steps
-const EducationIcons = [
-  // Class X - School / Foundation icon
-  <svg key="x" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-  </svg>,
-  // Class XII - Science icon
-  <svg key="xii" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10 2v7.31L4.75 18.27A2 2 0 0 0 6.47 21h11.06a2 2 0 0 0 1.72-2.73L14 9.31V2" />
-    <line x1="8.5" y1="2" x2="15.5" y2="2" />
-    <line x1="9" y1="14" x2="15" y2="14" />
-  </svg>,
-  // B.Tech - Cap icon
-  <svg key="btech" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-    <path d="M6 12v5c3 3 9 3 12 0v-5" />
-  </svg>,
-];
-
 export const EducationSection: React.FC = () => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   // Desktop SVG Path for the undulating orange wave
-  // Starts on left at y=230, dips to Node 1 at (160, 270), flows to Node 2 at (480, 210), ascends to Node 3 at (810, 75)
-  const desktopWavePath = "M 20 220 C 70 260, 110 270, 160 270 C 245 270, 360 210, 480 210 C 600 210, 690 140, 810 75 C 845 58, 880 55, 930 55";
+  // Starts on left at (20, 200), dips into Node 1 at (160, 270), sweeps into Node 2 at (490, 210), climbs to Node 3 at (810, 80), trails off to (930, 65)
+  const desktopWavePath = "M 20 200 C 60 220, 100 270, 160 270 C 270 270, 370 210, 490 210 C 620 210, 710 100, 810 80 C 850 70, 890 65, 930 65";
 
-  // Coordinates for the 3 desktop nodes along the SVG viewBox="0 0 950 340"
+  // Coordinates for the 3 desktop nodes along the SVG viewBox="0 0 950 350"
   const desktopNodes = [
-    { x: 160, y: 270, cardLeft: '17%', cardTop: '290px' },
-    { x: 480, y: 210, cardLeft: '50.5%', cardTop: '235px' },
-    { x: 810, y: 75, cardLeft: '85%', cardTop: '100px' },
+    { x: 160, y: 270, cardLeft: '17%', cardTop: '295px' },
+    { x: 490, y: 210, cardLeft: '51.5%', cardTop: '235px' },
+    { x: 810, y: 80, cardLeft: '85.5%', cardTop: '105px' },
   ];
 
   return (
@@ -48,17 +28,17 @@ export const EducationSection: React.FC = () => {
       id="education"
       className="relative py-24 sm:py-32 px-4 sm:px-8 lg:px-12 max-w-[1440px] mx-auto select-none overflow-hidden"
     >
-      {/* Ambient background decorative circle (exact match to top-right in reference image) */}
+      {/* Ambient background decorative circle (matching top-right in reference image) */}
       <div className="absolute right-[-80px] top-[100px] w-[340px] sm:w-[460px] h-[340px] sm:h-[460px] rounded-full bg-gradient-to-br from-[#E65A2B]/10 via-[#3B82F6]/5 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* ════════════════════════════════════════════════════════════════════════
           TOP MAIN CONTAINER: LEFT HEADLINE + RIGHT ANIMATED ORANGE WAVE TIMELINE
           (Direct match to reference image composition & flow)
          ════════════════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col xl:flex-row items-start justify-between gap-12 xl:gap-8 mb-28">
+      <div className="flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-8 mb-28">
 
         {/* ── LEFT COLUMN: TITLE, BADGE, NARRATIVE & ACTION BUTTON ── */}
-        <div className="w-full xl:w-[32%] xl:max-w-md shrink-0 pt-2">
+        <div className="w-full lg:w-[32%] lg:max-w-md shrink-0 pt-2">
           {/* Category Pill Tag */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
@@ -111,13 +91,13 @@ export const EducationSection: React.FC = () => {
         </div>
 
         {/* ── RIGHT COLUMN: DESKTOP ANIMATED ORANGE WAVY LINE WITH CHECKPOINT NODES ── */}
-        <div className="hidden xl:block w-full xl:w-[68%] relative min-h-[520px]">
+        <div className="hidden lg:block w-full lg:w-[68%] relative min-h-[520px]">
           
-          {/* SVG Animated Orange Line with Glow & Pulse */}
+          {/* SVG Animated Orange Line with Glow & Node Rings */}
           <svg
-            viewBox="0 0 950 340"
+            viewBox="0 0 950 350"
             fill="none"
-            className="w-full h-auto overflow-visible relative z-10 pointer-events-none"
+            className="w-full h-auto overflow-visible relative z-10"
           >
             <defs>
               {/* Soft ambient orange glow filter */}
@@ -126,64 +106,69 @@ export const EducationSection: React.FC = () => {
                 <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
               <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#E65A2B" stopOpacity="0.75" />
-                <stop offset="50%" stopColor="#E65A2B" stopOpacity="1" />
-                <stop offset="100%" stopColor="#FF7A45" stopOpacity="1" />
+                <stop offset="0%" stopColor="#E65A2B" />
+                <stop offset="50%" stopColor="#FF6B4A" />
+                <stop offset="100%" stopColor="#E65A2B" />
               </linearGradient>
             </defs>
 
-            {/* Background Soft Glow Trace */}
-            <motion.path
+            {/* 1. Ambient Glow Trail */}
+            <path
               d={desktopWavePath}
               fill="none"
               stroke="#E65A2B"
-              strokeWidth="10"
+              strokeWidth="12"
               strokeLinecap="round"
-              strokeOpacity="0.22"
+              strokeLinejoin="round"
+              opacity="0.22"
               filter="url(#orange-glow)"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
             />
 
-            {/* Primary Crisp Animated Orange Stroke */}
-            <motion.path
+            {/* 2. Solid Crisp Orange Connecting Path (100% Visible & Clear!) */}
+            <path
               d={desktopWavePath}
               fill="none"
               stroke="url(#waveGrad)"
-              strokeWidth="3.5"
+              strokeWidth="4"
               strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+              strokeLinejoin="round"
             />
 
-            {/* 3 Node Markers Drawn On the SVG Curve (Exact match to reference circles) */}
+            {/* 3. Smooth animated drawing highlight overlay */}
+            <motion.path
+              d={desktopWavePath}
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="24 160"
+              initial={{ strokeDashoffset: 400 }}
+              animate={{ strokeDashoffset: 0 }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              opacity="0.6"
+            />
+
+            {/* 3 Node Markers Drawn Directly On the SVG Curve */}
             {desktopNodes.map((node, i) => {
               const isHovered = hoveredIdx === i;
 
               return (
-                <g key={i} className="cursor-pointer pointer-events-auto">
+                <g key={i} className="cursor-pointer">
                   {/* Outer Pulsing Aura Ring */}
-                  <motion.circle
-                    cx={node.x}
-                    cy={node.y}
-                    r={isHovered ? 18 : 14}
-                    fill="#E65A2B"
-                    fillOpacity={isHovered ? 0.25 : 0.12}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    whileInView={{ scale: 1, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.6 + i * 0.25, duration: 0.5 }}
-                  />
-
-                  {/* White Center Container Ring with Soft Shadow */}
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r="10"
+                    r={isHovered ? 20 : 15}
+                    fill="#E65A2B"
+                    fillOpacity={isHovered ? 0.3 : 0.15}
+                    className="transition-all duration-300"
+                  />
+
+                  {/* White Outer Ring Container with Shadow */}
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r="10.5"
                     fill="#FFFFFF"
                     stroke="#E65A2B"
                     strokeWidth="3"
@@ -218,16 +203,16 @@ export const EducationSection: React.FC = () => {
                     top: node.cardTop,
                     transform: 'translate(-50%, 0)',
                   }}
-                  className="absolute w-[250px] pointer-events-auto group"
+                  className="absolute w-[240px] pointer-events-auto group"
                   onMouseEnter={() => setHoveredIdx(idx)}
                   onMouseLeave={() => setHoveredIdx(null)}
                 >
                   {/* Giant Faint Background Number (1, 2, 3) Matching Reference Graphic */}
                   <div
-                    className={`absolute -top-14 -right-2 text-[120px] font-black font-sans select-none pointer-events-none leading-none transition-all duration-500 ${
+                    className={`absolute -top-14 -right-2 text-[115px] font-black font-sans select-none pointer-events-none leading-none transition-all duration-500 ${
                       isHovered
-                        ? 'text-[#E65A2B]/18 scale-105'
-                        : 'text-gray-200/70'
+                        ? 'text-[#E65A2B]/22 scale-105'
+                        : 'text-gray-200/75'
                     }`}
                   >
                     {stepNumber}
@@ -238,7 +223,7 @@ export const EducationSection: React.FC = () => {
                     initial={{ opacity: 0, y: 25 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.7, delay: 0.4 + idx * 0.2 }}
+                    transition={{ duration: 0.7, delay: 0.2 + idx * 0.18 }}
                     className="relative z-10 pt-2"
                   >
                     {/* Period & Score Header Pills */}
@@ -272,8 +257,8 @@ export const EducationSection: React.FC = () => {
           </div>
         </div>
 
-        {/* ── RESPONSIVE MOBILE / TABLET FLOW (< XL) ── */}
-        <div className="block xl:hidden w-full relative">
+        {/* ── RESPONSIVE MOBILE / TABLET FLOW (< LG) ── */}
+        <div className="block lg:hidden w-full relative">
           <div className="relative pl-6 sm:pl-10 space-y-12">
             
             {/* Continuous Vertical Curved Path on Left */}
