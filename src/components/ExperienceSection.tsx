@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
-import { experiencesData } from '../data/portfolio';
+import { useProjects } from '../context/ProjectContext';
 
 export const ExperienceSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const { experiences } = useProjects();
 
   // Track scroll progress for connecting path
   const { scrollYProgress } = useScroll({
@@ -76,7 +77,7 @@ export const ExperienceSection: React.FC = () => {
 
       {/* Experience Folders List */}
       <div className="relative z-10 space-y-16 md:space-y-28">
-        {experiencesData.map((exp, idx) => {
+        {experiences.map((exp, idx) => {
           const isEven = idx % 2 === 0;
           const isOpen = hoveredIdx === idx;
 

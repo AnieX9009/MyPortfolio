@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
+import { useProjects } from '../context/ProjectContext';
 
 export const CustomCursor: React.FC = () => {
+  const { isAdminOpen } = useProjects();
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorTextRef = useRef<HTMLSpanElement>(null);
 
@@ -9,6 +11,18 @@ export const CustomCursor: React.FC = () => {
   const [cursorText, setCursorText] = useState('');
   const [isPointerFine, setIsPointerFine] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+
+  // Sync body admin-open class for normal OS cursor
+  useEffect(() => {
+    if (isAdminOpen) {
+      document.body.classList.add('admin-open');
+    } else {
+      document.body.classList.remove('admin-open');
+    }
+    return () => {
+      document.body.classList.remove('admin-open');
+    };
+  }, [isAdminOpen]);
 
   const cursorStateRef = useRef(cursorState);
   const cursorTextRefState = useRef(cursorText);
@@ -155,7 +169,7 @@ export const CustomCursor: React.FC = () => {
     };
   }, []);
 
-  if (!isPointerFine) return null;
+  if (!isPointerFine || isAdminOpen) return null;
 
   // Determine cursor dimensions & styling based on screenshot references
   let styleClasses = 'w-2 h-2 bg-[#202022] border border-[#202022]';

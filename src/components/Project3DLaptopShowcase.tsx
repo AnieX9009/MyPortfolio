@@ -1,20 +1,21 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, useSpring, useTransform, MotionValue } from 'framer-motion';
-import { projectsData } from '../data/portfolio';
+import { useProjects } from '../context/ProjectContext';
+import { ProjectItem } from '../data/portfolio';
 
 interface Project3DLaptopShowcaseProps {
   onHoverArtwork?: (url: string | null) => void;
   onSelectProject?: (id: string) => void;
+  projects?: ProjectItem[];
 }
 
-const displayProjects = projectsData.map((proj) => ({
-  ...proj,
-  tag: proj.tech[0] || 'Web App',
-  author: 'Animesh Mondal',
-}));
+type DisplayProject = ProjectItem & {
+  tag: string;
+  author: string;
+};
 
 const FannedCard: React.FC<{
-  proj: typeof displayProjects[0];
+  proj: DisplayProject;
   index: number;
   progress: MotionValue<number>;
   onHoverArtwork?: (url: string | null) => void;
@@ -90,8 +91,20 @@ const FannedCard: React.FC<{
   );
 };
 
-export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = ({ onHoverArtwork, onSelectProject }) => {
+export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = ({
+  onHoverArtwork,
+  onSelectProject,
+  projects: propProjects,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { projects: contextProjects } = useProjects();
+  const projects = propProjects || contextProjects;
+
+  const displayProjects: DisplayProject[] = projects.map((proj) => ({
+    ...proj,
+    tag: proj.tech[0] || 'Web App',
+    author: 'Animesh Mondal',
+  }));
 
   // Device tilt spring physics
   const springX = useSpring(0, { stiffness: 50, damping: 22 });
@@ -128,7 +141,7 @@ export const Project3DLaptopShowcase: React.FC<Project3DLaptopShowcaseProps> = (
     return () => {
       if (node) node.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [springX, springY, carouselProgressRaw]);
+  }, [springX, springY, carouselProgressRaw, displayProjects.length]);
 
   return (
     <div

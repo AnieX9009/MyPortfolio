@@ -109,17 +109,46 @@
     cursor: none !important;
   }
 
-  /* When inside an element with normal cursor mode (e.g., active project card) */
+  /* ── When inside Admin Panel or elements with normal cursor mode ── */
+  body.admin-open,
+  body.admin-open *,
+  body.admin-open *::before,
+  body.admin-open *::after,
+  [data-admin-panel],
+  [data-admin-panel] *,
   [data-normal-cursor],
   [data-normal-cursor] * {
     cursor: default !important;
   }
 
+  body.admin-open a,
+  body.admin-open button,
+  body.admin-open [role="button"],
+  body.admin-open select,
+  body.admin-open .cursor-pointer,
+  [data-admin-panel] a,
+  [data-admin-panel] button,
+  [data-admin-panel] [role="button"],
+  [data-admin-panel] select,
+  [data-admin-panel] .cursor-pointer,
   [data-normal-cursor] a,
   [data-normal-cursor] button,
   [data-normal-cursor] [role="button"],
+  [data-normal-cursor] select,
   [data-normal-cursor] .cursor-pointer {
     cursor: pointer !important;
+  }
+
+  body.admin-open input,
+  body.admin-open textarea,
+  body.admin-open [contenteditable],
+  [data-admin-panel] input,
+  [data-admin-panel] textarea,
+  [data-admin-panel] [contenteditable],
+  [data-normal-cursor] input,
+  [data-normal-cursor] textarea,
+  [data-normal-cursor] [contenteditable] {
+    cursor: text !important;
   }
 }
 

@@ -16,6 +16,9 @@ import SkillsSection from './components/SkillsSection';
 import EducationSection from './components/EducationSection';
 import ContactSection from './components/ContactSection';
 import AmbientSound from './components/AmbientSound';
+import { ProjectProvider } from './context/ProjectContext';
+import { AdminPanel } from './components/admin/AdminPanel';
+import { AdminTrigger } from './components/admin/AdminTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,44 +64,52 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <SmoothScrollProvider>
-      {/* Loading Mask Overlay */}
-      {!isLoaded && <LoadingMask onComplete={() => setIsLoaded(true)} />}
+    <ProjectProvider>
+      <SmoothScrollProvider>
+        {/* Loading Mask Overlay */}
+        {!isLoaded && <LoadingMask onComplete={() => setIsLoaded(true)} />}
 
-      {/* Refined Custom Cursor */}
-      <CustomCursor />
+        {/* Refined Custom Cursor */}
+        <CustomCursor />
 
-      {/* Soft Cursor Reveal Window Into Hidden Layer */}
-      <CursorRevealWindow activeArtworkUrl={activeArtworkUrl} />
+        {/* Soft Cursor Reveal Window Into Hidden Layer */}
+        <CursorRevealWindow activeArtworkUrl={activeArtworkUrl} />
 
-      {/* Fixed Primary Navigation Header */}
-      <SiteNavigation />
+        {/* Fixed Primary Navigation Header */}
+        <SiteNavigation />
 
-      {/* Persistent WebGL Background Scene */}
-      <ImmersiveScene
-        scrollProgress={scrollProgress}
-        mouseX={mouseX}
-        mouseY={mouseY}
-        isMobile={isMobile}
-      />
+        {/* Persistent WebGL Background Scene */}
+        <ImmersiveScene
+          scrollProgress={scrollProgress}
+          mouseX={mouseX}
+          mouseY={mouseY}
+          isMobile={isMobile}
+        />
 
-      {/* Bottom-Left Ambient Audio Button */}
-      <AmbientSound />
+        {/* Bottom-Left Ambient Audio Button */}
+        <AmbientSound />
 
-      {/* Fixed Bottom-Right Showreel Thumbnail Widget */}
-      <ShowreelWidget />
+        {/* Fixed Bottom-Right Showreel Thumbnail Widget */}
+        <ShowreelWidget />
 
-      {/* Main Document Layout */}
-      <main id="main-content" className="relative z-10">
-        <HeroScrollTransition />
-        <ProjectGrid onHoverArtwork={setActiveArtworkUrl} />
-        <ExperienceSection />
-        <SkillsSection />
-        <EducationSection />
-        <AboutSection />
-        <ContactSection />
-      </main>
-    </SmoothScrollProvider>
+        {/* Floating Admin Trigger Button */}
+        <AdminTrigger />
+
+        {/* Modal Admin Panel */}
+        <AdminPanel />
+
+        {/* Main Document Layout */}
+        <main id="main-content" className="relative z-10">
+          <HeroScrollTransition />
+          <ProjectGrid onHoverArtwork={setActiveArtworkUrl} />
+          <ExperienceSection />
+          <SkillsSection />
+          <EducationSection />
+          <AboutSection />
+          <ContactSection />
+        </main>
+      </SmoothScrollProvider>
+    </ProjectProvider>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { projectsData } from '../data/portfolio';
+import { useProjects } from '../context/ProjectContext';
 import ProjectCard from './ProjectCard';
 import Project3DLaptopShowcase from './Project3DLaptopShowcase';
 
@@ -9,18 +9,17 @@ interface ProjectGridProps {
 }
 
 export const ProjectGrid: React.FC<ProjectGridProps> = ({ onHoverArtwork }) => {
+  const { projects: allProjects } = useProjects();
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [activeDeckIndex, setActiveDeckIndex] = useState(0);
   const [hoveredDeckIndex, setHoveredDeckIndex] = useState<number | null>(null);
 
-  const allProjects = projectsData;
-
   const handleSelectProjectFromShowcase = (projectId: string) => {
-    const proj = projectsData.find((p) => p.id === projectId);
+    const proj = allProjects.find((p) => p.id === projectId);
     if (proj) {
       setHighlightedId(projectId);
 
-      const targetIdx = projectsData.findIndex((p) => p.id === projectId);
+      const targetIdx = allProjects.findIndex((p) => p.id === projectId);
       if (targetIdx !== -1) {
         setActiveDeckIndex(targetIdx);
         setHoveredDeckIndex(targetIdx);
@@ -40,14 +39,19 @@ export const ProjectGrid: React.FC<ProjectGridProps> = ({ onHoverArtwork }) => {
   };
 
   const handlePrevDeck = () => {
-    setActiveDeckIndex((prev) => (prev === 0 ? allProjects.length - 1 : prev - 1));
+    if (allProjects.length <= 1) return;
+    setActiveDeckIndex((prev) => (prev <= 0 ? allProjects.length - 1 : prev - 1));
   };
 
   const handleNextDeck = () => {
-    setActiveDeckIndex((prev) => (prev === allProjects.length - 1 ? 0 : prev + 1));
+    if (allProjects.length <= 1) return;
+    setActiveDeckIndex((prev) => (prev >= allProjects.length - 1 ? 0 : prev + 1));
   };
 
-  const currentActiveIndex = hoveredDeckIndex !== null ? hoveredDeckIndex : activeDeckIndex;
+  const currentActiveIndex =
+    hoveredDeckIndex !== null
+      ? Math.min(hoveredDeckIndex, Math.max(0, allProjects.length - 1))
+      : Math.min(activeDeckIndex, Math.max(0, allProjects.length - 1));
 
   return (
     <section id="projects" className="pt-10 sm:pt-14 pb-28 px-4 sm:px-8 lg:px-12 max-w-7xl mx-auto relative select-none">
