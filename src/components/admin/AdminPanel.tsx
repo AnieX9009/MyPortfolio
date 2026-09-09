@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProjects } from '../../context/ProjectContext';
 import { ProjectItem, ExperienceItem } from '../../data/portfolio';
+import { getActiveFirebaseConfig, FirebaseConfig } from '../../services/firebase';
 
 const QUICK_SKILLS = [
   'React',
@@ -45,6 +46,12 @@ export const AdminPanel: React.FC = () => {
     resetExperiencesToDefaults,
     exportExperiencesCode,
 
+    dbStatus,
+    saveDbCredentials,
+    disconnectDb,
+    seedInitialData,
+    refreshCloudData,
+
     isAdminOpen,
     setIsAdminOpen,
     isAuthenticated,
@@ -53,8 +60,8 @@ export const AdminPanel: React.FC = () => {
     changeAdminPasscode,
   } = useProjects();
 
-  // Active Tab: 'projects' | 'experiences'
-  const [activeTab, setActiveTab] = useState<'projects' | 'experiences'>('projects');
+  // Active Tab: 'projects' | 'experiences' | 'database'
+  const [activeTab, setActiveTab] = useState<'projects' | 'experiences' | 'database'>('projects');
 
   // Login PIN state
   const [pinInput, setPinInput] = useState('');
@@ -104,6 +111,31 @@ export const AdminPanel: React.FC = () => {
   const [oldPin, setOldPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [pinChangeMsg, setPinChangeMsg] = useState<{ text: string; isError: boolean } | null>(null);
+
+  // ── Database Settings Form state ──
+  const [dbApiKey, setDbApiKey] = useState('');
+  const [dbAuthDomain, setDbAuthDomain] = useState('');
+  const [dbProjectId, setDbProjectId] = useState('');
+  const [dbStorageBucket, setDbStorageBucket] = useState('');
+  const [dbSenderId, setDbSenderId] = useState('');
+  const [dbAppId, setDbAppId] = useState('');
+  const [dbTestResult, setDbTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isSavingDb, setIsSavingDb] = useState(false);
+  const [isSeedingDb, setIsSeedingDb] = useState(false);
+  const [seedResult, setSeedResult] = useState<string | null>(null);
+
+  // Populate Database form with existing config if available
+  useEffect(() => {
+    const existing = getActiveFirebaseConfig();
+    if (existing) {
+      setDbApiKey(existing.apiKey || '');
+      setDbAuthDomain(existing.authDomain || '');
+      setDbProjectId(existing.projectId || '');
+      setDbStorageBucket(existing.storageBucket || '');
+      setDbSenderId(existing.messagingSenderId || '');
+      setDbAppId(existing.appId || '');
+    }
+  }, [isAdminOpen]);
 
   // Close on Escape
   useEffect(() => {
@@ -200,7 +232,7 @@ export const AdminPanel: React.FC = () => {
     setGalleryImages(galleryImages.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleSaveProject = (e: React.FormEvent) => {
+  const handleSaveProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       alert('Please enter a project title.');
@@ -214,7 +246,7 @@ export const AdminPanel: React.FC = () => {
     const allImages = [mediaUrl.trim(), ...galleryImages];
 
     if (editingProjectId) {
-      updateProject(editingProjectId, {
+      await updateProject(editingProjectId, {
         title: title.trim(),
         subtitle: subtitle.trim(),
         description: description.trim(),
@@ -227,9 +259,9 @@ export const AdminPanel: React.FC = () => {
         source: sourceUrl.trim() || undefined,
         color: accentColor,
       });
-      showToast(`Updated "${title}"! Original portfolio updated live.`);
+      showToast(`Updated "${title}"! Saved ${dbStatus.isConnected ? 'to Cloud Firestore' : 'locally'}.`);
     } else {
-      addProject({
+      await addProject({
         title: title.trim(),
         subtitle: subtitle.trim(),
         description: description.trim(),
@@ -242,15 +274,15 @@ export const AdminPanel: React.FC = () => {
         source: sourceUrl.trim() || undefined,
         color: accentColor,
       });
-      showToast(`Added "${title}"! Original portfolio updated live.`);
+      showToast(`Added "${title}"! Saved ${dbStatus.isConnected ? 'to Cloud Firestore' : 'locally'}.`);
     }
 
     setIsEditorOpen(false);
   };
 
-  const handleDeleteProject = (proj: ProjectItem) => {
+  const handleDeleteProject = async (proj: ProjectItem) => {
     if (window.confirm(`Are you sure you want to delete "${proj.title}"?`)) {
-      deleteProject(proj.id);
+      await deleteProject(proj.id);
       showToast(`Deleted "${proj.title}".`);
     }
   };
@@ -294,7 +326,7 @@ export const AdminPanel: React.FC = () => {
     setExpBullets(expBullets.filter((_, i) => i !== index));
   };
 
-  const handleSaveExperience = (e: React.FormEvent) => {
+  const handleSaveExperience = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expRole.trim() || !expCompany.trim()) {
       alert('Please provide Role and Company.');
@@ -316,20 +348,95 @@ export const AdminPanel: React.FC = () => {
     };
 
     if (editingExpIndex !== null) {
-      updateExperience(editingExpIndex, newExp);
+      await updateExperience(editingExpIndex, newExp);
       showToast(`Updated "${newExp.role}" at ${newExp.company}!`);
     } else {
-      addExperience(newExp);
+      await addExperience(newExp);
       showToast(`Added "${newExp.role}" at ${newExp.company}!`);
     }
 
     setIsExpEditorOpen(false);
   };
 
-  const handleDeleteExperience = (exp: ExperienceItem, idx: number) => {
+  const handleDeleteExperience = async (exp: ExperienceItem, idx: number) => {
     if (window.confirm(`Are you sure you want to delete ${exp.role} at ${exp.company}?`)) {
-      deleteExperience(idx);
+      await deleteExperience(idx);
       showToast(`Deleted "${exp.company}".`);
+    }
+  };
+
+  // ── Database Handlers ──
+  const handleConnectDatabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dbApiKey.trim() || !dbProjectId.trim() || !dbAppId.trim()) {
+      setDbTestResult({
+        success: false,
+        message: 'Please provide at least API Key, Project ID, and App ID from your Firebase Console.',
+      });
+      return;
+    }
+
+    setIsSavingDb(true);
+    setDbTestResult(null);
+
+    const config: FirebaseConfig = {
+      apiKey: dbApiKey.trim(),
+      authDomain: dbAuthDomain.trim() || `${dbProjectId.trim()}.firebaseapp.com`,
+      projectId: dbProjectId.trim(),
+      storageBucket: dbStorageBucket.trim() || `${dbProjectId.trim()}.appspot.com`,
+      messagingSenderId: dbSenderId.trim() || undefined,
+      appId: dbAppId.trim(),
+    };
+
+    const res = await saveDbCredentials(config);
+    setIsSavingDb(false);
+    setDbTestResult(res);
+
+    if (res.success) {
+      showToast('Connected to Cloud Firestore! Database is active.');
+    }
+  };
+
+  const handleSeedDatabase = async () => {
+    if (!dbStatus.isConnected) {
+      alert('Please connect your Firebase Firestore database first before seeding.');
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Upload all ${projects.length} projects and ${experiences.length} work experiences to your Cloud Firestore database?`
+      )
+    ) {
+      return;
+    }
+
+    setIsSeedingDb(true);
+    setSeedResult(null);
+
+    const res = await seedInitialData();
+    setIsSeedingDb(false);
+
+    if (res.success) {
+      setSeedResult(res.message);
+      showToast('All portfolio data uploaded to Firestore!');
+    } else {
+      setSeedResult(`Error: ${res.message}`);
+    }
+  };
+
+  const handleDisconnectDatabase = () => {
+    if (window.confirm('Disconnect from Cloud Database and revert to local storage?')) {
+      disconnectDb();
+      setDbApiKey('');
+      setDbAuthDomain('');
+      setDbProjectId('');
+      setDbStorageBucket('');
+      setDbSenderId('');
+      setDbAppId('');
+      setDbTestResult(null);
+      setSeedResult(null);
+      showToast('Disconnected from Cloud DB. Reverted to local mode.');
     }
   };
 
@@ -365,7 +472,7 @@ export const AdminPanel: React.FC = () => {
         resetToDefaults();
         showToast('Projects reset to default CV data.');
       }
-    } else {
+    } else if (activeTab === 'experiences') {
       if (window.confirm('Reset all work experiences to default CV data?')) {
         resetExperiencesToDefaults();
         showToast('Work experiences reset to default CV data.');
@@ -446,7 +553,7 @@ export const AdminPanel: React.FC = () => {
 
           <h3 className="text-2xl font-extrabold tracking-tight text-white mb-2">Portfolio Admin Panel</h3>
           <p className="text-xs text-gray-400 mb-6 leading-relaxed">
-            Enter your passcode to manage projects, edit work experience dossiers, update Cloudinary photos, and skills.
+            Enter your passcode to manage projects, edit work experience dossiers, sync to free Cloud Firestore DB, and customize details.
           </p>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -491,24 +598,49 @@ export const AdminPanel: React.FC = () => {
                 A
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <h2 className="text-lg sm:text-xl font-extrabold text-white">Portfolio Dashboard</h2>
+                  {/* Cloud DB Connection Status Pill */}
+                  <button
+                    onClick={() => setActiveTab('database')}
+                    title="Click to view Database Settings"
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold flex items-center gap-1.5 transition-all ${
+                      dbStatus.isConnected
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                        : dbStatus.isConfigured
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
+                        : 'bg-white/10 text-gray-400 border border-white/10 hover:bg-white/15'
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        dbStatus.isConnected
+                          ? 'bg-emerald-400 animate-pulse'
+                          : dbStatus.isConfigured
+                          ? 'bg-amber-400'
+                          : 'bg-gray-400'
+                      }`}
+                    />
+                    <span>{dbStatus.isConnected ? 'Firestore Sync Active' : 'Local Storage Mode'}</span>
+                  </button>
                 </div>
                 <p className="text-xs text-gray-400">
-                  Manage projects and work experience dossiers. Updates appear live on submit.
+                  Manage projects and work experience dossiers. Updates persist in real-time.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              {activeTab === 'projects' ? (
+              {activeTab === 'projects' && (
                 <button
                   onClick={openCreateProjectModal}
                   className="px-4 py-2 rounded-xl bg-[#E65A2B] hover:bg-[#ff6937] text-white text-xs font-bold tracking-wider uppercase transition-all shadow-md shadow-orange-600/30 flex items-center gap-1.5"
                 >
                   <span className="text-base leading-none">+</span> Add Project
                 </button>
-              ) : (
+              )}
+
+              {activeTab === 'experiences' && (
                 <button
                   onClick={openCreateExpModal}
                   className="px-4 py-2 rounded-xl bg-[#E65A2B] hover:bg-[#ff6937] text-white text-xs font-bold tracking-wider uppercase transition-all shadow-md shadow-orange-600/30 flex items-center gap-1.5"
@@ -533,13 +665,15 @@ export const AdminPanel: React.FC = () => {
                 🔑 PIN
               </button>
 
-              <button
-                onClick={handleResetCurrentTab}
-                title={`Reset ${activeTab} to defaults`}
-                className="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-all"
-              >
-                ↺ Reset
-              </button>
+              {activeTab !== 'database' && (
+                <button
+                  onClick={handleResetCurrentTab}
+                  title={`Reset ${activeTab} to defaults`}
+                  className="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-300 text-xs font-medium transition-all"
+                >
+                  ↺ Reset
+                </button>
+              )}
 
               <button
                 onClick={logoutAdmin}
@@ -560,10 +694,10 @@ export const AdminPanel: React.FC = () => {
           </div>
 
           {/* Tab Selection Bar */}
-          <div className="flex border-b border-white/10 px-5 sm:px-6 bg-[#141416]">
+          <div className="flex border-b border-white/10 px-5 sm:px-6 bg-[#141416] overflow-x-auto">
             <button
               onClick={() => setActiveTab('projects')}
-              className={`py-3 px-4 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+              className={`py-3 px-4 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
                 activeTab === 'projects'
                   ? 'border-[#E65A2B] text-white bg-white/[0.02]'
                   : 'border-transparent text-gray-400 hover:text-gray-200'
@@ -577,7 +711,7 @@ export const AdminPanel: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('experiences')}
-              className={`py-3 px-4 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all ${
+              className={`py-3 px-4 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
                 activeTab === 'experiences'
                   ? 'border-[#E65A2B] text-white bg-white/[0.02]'
                   : 'border-transparent text-gray-400 hover:text-gray-200'
@@ -588,9 +722,29 @@ export const AdminPanel: React.FC = () => {
                 {experiences.length}
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('database')}
+              className={`py-3 px-4 text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
+                activeTab === 'database'
+                  ? 'border-[#E65A2B] text-white bg-white/[0.02]'
+                  : 'border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <span>☁️ Cloud Database & Sync</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                  dbStatus.isConnected ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-gray-400'
+                }`}
+              >
+                {dbStatus.isConnected ? 'ONLINE' : 'SETUP'}
+              </span>
+            </button>
           </div>
 
-          {/* Tab 1: Project List */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB 1: PROJECT LIST */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           {activeTab === 'projects' && (
             <div className="p-5 sm:p-6 overflow-y-auto space-y-3.5 flex-1 divide-y divide-white/5">
               {projects.length === 0 ? (
@@ -600,14 +754,14 @@ export const AdminPanel: React.FC = () => {
                     onClick={openCreateProjectModal}
                     className="px-5 py-2.5 rounded-xl bg-[#E65A2B] text-white text-xs font-bold"
                   >
-                    Create Your First Project
+                    Add First Project
                   </button>
                 </div>
               ) : (
                 projects.map((proj, idx) => (
                   <div
                     key={proj.id}
-                    className="pt-3.5 first:pt-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 transition-all"
+                    className="pt-3.5 first:pt-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-white/10 transition-all"
                   >
                     <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
                       {/* Move Controls */}
@@ -634,53 +788,78 @@ export const AdminPanel: React.FC = () => {
                       </div>
 
                       {/* Thumbnail */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-black/40 border border-white/10 shrink-0">
+                      <div className="w-16 h-12 sm:w-20 sm:h-14 rounded-xl overflow-hidden bg-black/40 border border-white/10 shrink-0 relative group">
                         <img
                           src={proj.mediaUrl}
                           alt={proj.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
-                              'https://placehold.co/100x100/202022/E65A2B?text=Img';
+                              'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80';
                           }}
                         />
                         {proj.images && proj.images.length > 1 && (
-                          <span className="absolute bottom-1 right-1 text-[9px] font-mono bg-black/80 px-1.5 py-0.5 rounded text-white font-bold">
+                          <div className="absolute bottom-1 right-1 bg-black/75 px-1 py-0.5 rounded text-[9px] font-mono text-white">
                             +{proj.images.length - 1}
-                          </span>
+                          </div>
                         )}
                       </div>
 
-                      {/* Metadata */}
+                      {/* Project Details */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h4 className="text-sm sm:text-base font-bold text-white truncate">{proj.title}</h4>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-gray-300">
-                            {proj.category}
-                          </span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-orange-500/20 text-[#FF7A45] font-bold uppercase">
-                            {proj.type}
+                          <h4 className="text-sm sm:text-base font-bold text-white tracking-wide">
+                            {proj.title}
+                          </h4>
+                          <span
+                            className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase font-bold tracking-wider"
+                            style={{
+                              backgroundColor: `${proj.color || '#E65A2B'}22`,
+                              color: proj.color || '#E65A2B',
+                              borderColor: `${proj.color || '#E65A2B'}44`,
+                              borderWidth: '1px',
+                            }}
+                          >
+                            {proj.type === 'lab' ? 'Lab / Concept' : 'Live Work'}
                           </span>
                         </div>
 
-                        {proj.subtitle && (
-                          <p className="text-xs text-gray-400 truncate mb-1.5">{proj.subtitle}</p>
-                        )}
+                        <p className="text-xs font-mono text-gray-400 mb-2 truncate max-w-xl">
+                          {proj.subtitle || proj.category}
+                        </p>
 
-                        <div className="flex flex-wrap gap-1">
-                          {proj.tech.map((t) => (
+                        {/* Tech Pills */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {proj.tech?.slice(0, 5).map((t) => (
                             <span
                               key={t}
-                              className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-gray-300 border border-white/5"
+                              className="px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[10px] font-mono text-gray-300"
                             >
                               {t}
                             </span>
                           ))}
+                          {proj.tech && proj.tech.length > 5 && (
+                            <span className="text-[10px] text-gray-400 font-mono">
+                              +{proj.tech.length - 5}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
+                    {/* Action Buttons */}
                     <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      {proj.live && (
+                        <a
+                          href={proj.live}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs border border-white/10 transition-all"
+                          title="Open Live URL"
+                        >
+                          🔗
+                        </a>
+                      )}
                       <button
                         onClick={() => openEditProjectModal(proj)}
                         className="px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-[#E65A2B] text-white text-xs font-semibold border border-white/10 hover:border-[#E65A2B] transition-all flex items-center gap-1"
@@ -701,7 +880,9 @@ export const AdminPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Tab 2: Work Experience List */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB 2: WORK EXPERIENCE LIST */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           {activeTab === 'experiences' && (
             <div className="p-5 sm:p-6 overflow-y-auto space-y-3.5 flex-1 divide-y divide-white/5">
               {experiences.length === 0 ? (
@@ -798,6 +979,250 @@ export const AdminPanel: React.FC = () => {
             </div>
           )}
 
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* TAB 3: CLOUD DATABASE & SYNC */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {activeTab === 'database' && (
+            <div className="p-5 sm:p-7 overflow-y-auto space-y-6 flex-1">
+              {/* Status Banner */}
+              <div
+                className={`p-5 rounded-2xl border transition-all ${
+                  dbStatus.isConnected
+                    ? 'bg-emerald-950/30 border-emerald-500/30'
+                    : 'bg-amber-950/20 border-amber-500/30'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${
+                        dbStatus.isConnected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                      }`}
+                    >
+                      {dbStatus.isConnected ? '🟢' : '⚡'}
+                    </div>
+                    <div>
+                      <h4 className="text-base font-bold text-white flex items-center gap-2">
+                        {dbStatus.isConnected ? 'Cloud Firestore DB Connected' : 'Local Storage Mode Active'}
+                      </h4>
+                      <p className="text-xs text-gray-300 mt-0.5">
+                        {dbStatus.isConnected
+                          ? 'Your portfolio is synced to Google Cloud Firestore. Changes are live for all visitors worldwide.'
+                          : 'Connect Google Firebase below to permanently save added projects and sync them globally.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {dbStatus.isConnected && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={refreshCloudData}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-gray-200 transition-all"
+                      >
+                        🔄 Refresh Data
+                      </button>
+                      <button
+                        onClick={handleDisconnectDatabase}
+                        className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-mono text-red-300 transition-all"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 1-Click Initial Seeding Tool (Available once connected) */}
+              {dbStatus.isConnected && (
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-orange-950/40 via-[#18181B] to-[#18181B] border border-orange-500/25">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <span>⚡ 1-Click Seed Initial Data to Cloud Database</span>
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-1 max-w-xl">
+                        Upload all current projects ({projects.length}) and work experiences ({experiences.length})
+                        into your Firestore collections so your live database is immediately ready.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleSeedDatabase}
+                      disabled={isSeedingDb}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#E65A2B] to-[#FF7A45] hover:opacity-95 disabled:opacity-50 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md shadow-orange-600/30 whitespace-nowrap"
+                    >
+                      {isSeedingDb ? 'Uploading to Cloud...' : '⚡ Seed All Data'}
+                    </button>
+                  </div>
+                  {seedResult && (
+                    <p className="mt-3 text-xs font-mono text-emerald-400 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/20">
+                      ✓ {seedResult}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Configuration Form */}
+              <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Firebase Credentials</h4>
+                    <p className="text-xs text-gray-400">
+                      Get these free keys from Firebase Console ➔ Project Settings ➔ Web App
+                    </p>
+                  </div>
+                  <a
+                    href="https://console.firebase.google.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-mono text-[#FF7A45] hover:underline flex items-center gap-1"
+                  >
+                    Open Firebase Console ↗
+                  </a>
+                </div>
+
+                <form onSubmit={handleConnectDatabase} className="space-y-4 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                        API Key *
+                      </label>
+                      <input
+                        type="text"
+                        value={dbApiKey}
+                        onChange={(e) => setDbApiKey(e.target.value)}
+                        placeholder="AIzaSy..."
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                        Project ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={dbProjectId}
+                        onChange={(e) => setDbProjectId(e.target.value)}
+                        placeholder="my-portfolio-app"
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                        App ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={dbAppId}
+                        onChange={(e) => setDbAppId(e.target.value)}
+                        placeholder="1:123456789:web:abcdef"
+                        required
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                        Auth Domain
+                      </label>
+                      <input
+                        type="text"
+                        value={dbAuthDomain}
+                        onChange={(e) => setDbAuthDomain(e.target.value)}
+                        placeholder="my-portfolio-app.firebaseapp.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                        Storage Bucket (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={dbStorageBucket}
+                        onChange={(e) => setDbStorageBucket(e.target.value)}
+                        placeholder="my-portfolio-app.appspot.com"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                        Messaging Sender ID (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={dbSenderId}
+                        onChange={(e) => setDbSenderId(e.target.value)}
+                        placeholder="1234567890"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
+                      />
+                    </div>
+                  </div>
+
+                  {dbTestResult && (
+                    <div
+                      className={`p-3 rounded-xl text-xs font-mono border ${
+                        dbTestResult.success
+                          ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30'
+                          : 'bg-red-950/40 text-red-300 border-red-500/30'
+                      }`}
+                    >
+                      {dbTestResult.success ? '✓ ' : '✕ '} {dbTestResult.message}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingDb}
+                      className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E65A2B] to-[#FF7A45] hover:opacity-95 disabled:opacity-50 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md shadow-orange-600/30"
+                    >
+                      {isSavingDb ? 'Connecting...' : 'Save & Connect Cloud DB'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Step-by-Step Tutorial Box */}
+              <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 text-xs text-gray-300 space-y-3">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>📖 Quick 3-Step Setup Guide (100% Free Forever)</span>
+                </h4>
+                <ol className="list-decimal list-inside space-y-2 text-gray-400 leading-relaxed font-mono">
+                  <li>
+                    Go to <a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="text-[#FF7A45] underline">Firebase Console</a> and click <strong>"Add project"</strong>.
+                  </li>
+                  <li>
+                    In the left menu, click <strong>Build ➔ Firestore Database</strong> ➔ <strong>Create database</strong>.
+                    In the <strong>Rules</strong> tab, set:
+                    <pre className="p-2.5 mt-1.5 rounded-lg bg-black/60 text-gray-300 text-[11px] overflow-x-auto">
+{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`}
+                    </pre>
+                  </li>
+                  <li>
+                    Click the <strong>Gear icon ⚙️ ➔ Project settings ➔ Add Web App (&lt;/&gt;)</strong>, copy your keys into the form above, and click <strong>"Save & Connect"</strong>!
+                  </li>
+                </ol>
+              </div>
+            </div>
+          )}
+
           {/* Footer Guide Note */}
           <div className="p-3.5 bg-[#141416] border-t border-white/5 text-center text-xs text-gray-400 font-mono">
             💡 Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-white">Ctrl + Shift + A</kbd> anytime
@@ -848,24 +1273,23 @@ export const AdminPanel: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. CARBON - OFFSET"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm"
+                      placeholder="e.g. Crumble Mobile App"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B] focus:ring-1 focus:ring-[#E65A2B]"
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                      Subtitle / Tagline
+                      Subtitle / Role Line
                     </label>
                     <input
                       type="text"
                       value={subtitle}
                       onChange={(e) => setSubtitle(e.target.value)}
-                      placeholder="e.g. FINANCIAL & ECOLOGICAL WEB APP"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm"
+                      placeholder="e.g. FOOD DELIVERY APP — FULL SYSTEM"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B] focus:ring-1 focus:ring-[#E65A2B]"
                     />
                   </div>
                 </div>
@@ -880,125 +1304,115 @@ export const AdminPanel: React.FC = () => {
                       type="text"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      placeholder="e.g. Web Application / Gamification"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm"
+                      placeholder="e.g. Mobile App / React Native"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B] focus:ring-1 focus:ring-[#E65A2B]"
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                      Project Type
+                      Portfolio Section
                     </label>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setProjectType('work')}
-                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                          projectType === 'work'
-                            ? 'bg-[#E65A2B] text-white shadow-md shadow-orange-600/30'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                        }`}
-                      >
-                        Client / Live Work
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setProjectType('lab')}
-                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold font-mono transition-all ${
-                          projectType === 'lab'
-                            ? 'bg-[#E65A2B] text-white shadow-md shadow-orange-600/30'
-                            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                        }`}
-                      >
-                        R&D / Lab Project
-                      </button>
-                    </div>
+                    <select
+                      value={projectType}
+                      onChange={(e) => setProjectType(e.target.value as 'work' | 'lab')}
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#222226] border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
+                    >
+                      <option value="work">Commercial Work / Live Projects</option>
+                      <option value="lab">Lab / Concept / Experiments</option>
+                    </select>
                   </div>
                 </div>
 
-                {/* Row 3: CLOUDINARY MAIN IMAGE LINK & LIVE PREVIEW */}
-                <div className="p-4 rounded-2xl bg-black/40 border border-orange-500/20 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-mono uppercase text-[#FF7A45] font-bold tracking-wider">
-                      ★ Cloudinary Image Link (Main Cover Photo) *
-                    </label>
-                    <span className="text-[11px] font-mono text-gray-400">Direct CDN URL</span>
-                  </div>
+                {/* Row 3: Description */}
+                <div>
+                  <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
+                    Description / Project Case Study
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe what you built, features, architecture, and impact..."
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm leading-relaxed focus:outline-none focus:border-[#E65A2B] focus:ring-1 focus:ring-[#E65A2B]"
+                  />
+                </div>
 
+                {/* Row 4: Main Media URL (Cloudinary / Image URL) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-mono uppercase text-gray-400 font-bold">
+                      Primary Project Image URL (Cloudinary / Web) *
+                    </label>
+                    <a
+                      href="https://cloudinary.com/console"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] font-mono text-[#FF7A45] hover:underline"
+                    >
+                      Open Cloudinary ↗
+                    </a>
+                  </div>
                   <input
                     type="url"
-                    required
                     value={mediaUrl}
                     onChange={(e) => setMediaUrl(e.target.value)}
-                    placeholder="https://res.cloudinary.com/deitdqyiw/image/upload/v12345/my-image.png"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-xs font-mono"
+                    placeholder="https://res.cloudinary.com/your-cloud/image/upload/v12345/project.png"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-mono focus:outline-none focus:border-[#E65A2B]"
                   />
-
-                  {/* Real-time Image Preview */}
                   {mediaUrl && (
-                    <div className="mt-2 p-3 rounded-xl bg-black/60 border border-white/10 flex items-center gap-4">
-                      <div className="relative w-28 h-20 rounded-lg overflow-hidden bg-white/5 shrink-0 border border-white/10">
-                        <img
-                          src={mediaUrl}
-                          alt="Cloudinary Preview"
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              'https://placehold.co/120x80/202022/FF0000?text=Invalid+URL';
-                          }}
-                        />
-                      </div>
-                      <div className="text-xs text-gray-300 overflow-hidden">
-                        <p className="font-bold text-emerald-400 mb-0.5">✓ Image Live Preview</p>
-                        <p className="text-[11px] text-gray-400 truncate max-w-md font-mono">{mediaUrl}</p>
-                      </div>
+                    <div className="mt-2.5 w-full h-32 rounded-xl bg-black/50 border border-white/10 overflow-hidden relative">
+                      <img
+                        src={mediaUrl}
+                        alt="Primary Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80';
+                        }}
+                      />
+                      <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 rounded text-[10px] font-mono text-white">
+                        Primary Cover Image Preview
+                      </span>
                     </div>
                   )}
-
-                  <p className="text-[11px] text-gray-400 leading-relaxed">
-                    💡 <strong>Tip:</strong> In Cloudinary Media Library, click the image and click{' '}
-                    <strong>"Copy URL"</strong>, then paste it here directly. No code changes needed!
-                  </p>
                 </div>
 
-                {/* Row 4: ADDITIONAL GALLERY SCREENSHOTS */}
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
-                  <label className="block text-xs font-mono uppercase text-gray-300 font-bold">
-                    Additional Gallery Screenshots (Optional Cloudinary Links)
+                {/* Row 5: Gallery Images */}
+                <div>
+                  <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
+                    Additional Gallery Images (Cloudinary Screenshots)
                   </label>
-                  <p className="text-[11px] text-gray-400">
-                    These will auto-slide on the expanded project card carousel.
-                  </p>
-
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mb-3">
                     <input
                       type="url"
                       value={newGalleryInput}
                       onChange={(e) => setNewGalleryInput(e.target.value)}
-                      placeholder="Add another Cloudinary URL..."
-                      className="flex-1 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-xs font-mono"
+                      placeholder="Paste additional Cloudinary image link..."
+                      className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
                     />
                     <button
                       type="button"
                       onClick={handleAddGalleryImage}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-colors"
+                      className="px-4 py-2 bg-white/10 hover:bg-[#E65A2B] text-white text-xs font-bold rounded-xl transition-all"
                     >
-                      + Add
+                      + Add Image
                     </button>
                   </div>
 
                   {galleryImages.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-                      {galleryImages.map((img, idx) => (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {galleryImages.map((img, i) => (
                         <div
-                          key={idx}
-                          className="relative group rounded-lg overflow-hidden border border-white/10 aspect-video bg-black/40"
+                          key={i}
+                          className="relative h-20 rounded-xl overflow-hidden bg-black/60 border border-white/10 group"
                         >
-                          <img src={img} alt="screenshot" className="w-full h-full object-cover" />
+                          <img src={img} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
                           <button
                             type="button"
-                            onClick={() => handleRemoveGalleryImage(idx)}
-                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity"
+                            onClick={() => handleRemoveGalleryImage(i)}
+                            className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-600/90 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove image"
                           >
                             ✕
                           </button>
@@ -1008,114 +1422,97 @@ export const AdminPanel: React.FC = () => {
                   )}
                 </div>
 
-                {/* Row 5: Description */}
+                {/* Row 6: Tech Stack Tags */}
                 <div>
                   <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                    Project Description *
+                    Tech Stack & Tags
                   </label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Provide details about the project goals, architecture, features, and challenges solved..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm leading-relaxed"
-                  />
-                </div>
-
-                {/* Row 6: Required Languages / Skills / Tech Stack */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-mono uppercase text-gray-400 font-bold">
-                    Languages, Skills & Tech Stack Needed
-                  </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mb-2.5">
                     <input
                       type="text"
                       value={techInput}
                       onChange={(e) => setTechInput(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ',') {
+                        if (e.key === 'Enter') {
                           e.preventDefault();
                           handleAddTechTag(techInput);
                         }
                       }}
-                      placeholder="Type skill & press Enter (e.g. React, Node.js, Cloudinary)..."
-                      className="flex-1 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-xs"
+                      placeholder="Type a skill and press Enter (or click quick tags below)..."
+                      className="flex-1 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddTechTag(techInput)}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition-colors"
+                      className="px-4 py-2 bg-white/10 hover:bg-[#E65A2B] text-white text-xs font-bold rounded-xl transition-all"
                     >
                       Add Tag
                     </button>
                   </div>
 
-                  {/* Active Tech Chips */}
-                  {techList.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {techList.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E65A2B]/20 text-[#FF7A45] border border-[#E65A2B]/40 text-xs font-mono font-bold"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTechTag(tag)}
-                            className="text-gray-400 hover:text-white"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Quick-Pick Popular Skills */}
-                  <div className="pt-2">
-                    <span className="text-[10px] text-gray-400 block mb-1 font-mono uppercase">Quick Add:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {QUICK_SKILLS.map((sk) => (
+                  {/* Active Tags */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {techList.map((t) => (
+                      <span
+                        key={t}
+                        className="px-2.5 py-1 rounded-lg bg-[#E65A2B]/15 text-[#FF7A45] border border-[#E65A2B]/30 text-xs font-mono flex items-center gap-1.5"
+                      >
+                        {t}
                         <button
-                          key={sk}
                           type="button"
-                          disabled={techList.includes(sk)}
-                          onClick={() => handleAddTechTag(sk)}
-                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 disabled:opacity-30 text-gray-300 transition-colors"
+                          onClick={() => handleRemoveTechTag(t)}
+                          className="hover:text-white font-bold"
                         >
-                          +{sk}
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Quick Select Preset Skills */}
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/5">
+                    <span className="text-[10px] text-gray-400 font-mono self-center mr-1">
+                      Quick Add:
+                    </span>
+                    {QUICK_SKILLS.filter((s) => !techList.includes(s))
+                      .slice(0, 10)
+                      .map((s) => (
+                        <button
+                          type="button"
+                          key={s}
+                          onClick={() => handleAddTechTag(s)}
+                          className="px-2 py-0.5 rounded bg-white/5 hover:bg-white/15 text-[11px] font-mono text-gray-300 transition-colors"
+                        >
+                          +{s}
                         </button>
                       ))}
-                    </div>
                   </div>
                 </div>
 
-                {/* Row 7: Live URL & Source Code */}
+                {/* Row 7: Live & Source Links */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                      Live Project URL (Optional)
+                      Live App / Demo / Figma URL
                     </label>
                     <input
                       type="url"
                       value={liveUrl}
                       onChange={(e) => setLiveUrl(e.target.value)}
-                      placeholder="https://myproject.vercel.app"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-xs font-mono"
+                      placeholder="https://example.com or Figma link"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                      Source Code / GitHub URL (Optional)
+                      GitHub Source URL
                     </label>
                     <input
                       type="url"
                       value={sourceUrl}
                       onChange={(e) => setSourceUrl(e.target.value)}
-                      placeholder="https://github.com/AnieX9009/project"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-xs font-mono"
+                      placeholder="https://github.com/AnieX9009/..."
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#E65A2B]"
                     />
                   </div>
                 </div>
@@ -1125,41 +1522,43 @@ export const AdminPanel: React.FC = () => {
                   <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
                     Accent Color
                   </label>
-                  <div className="flex items-center gap-2">
-                    {PRESET_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setAccentColor(c)}
-                        style={{ backgroundColor: c }}
-                        className={`w-7 h-7 rounded-full transition-transform ${
-                          accentColor === c ? 'scale-125 ring-2 ring-white' : 'opacity-80 hover:opacity-100'
-                        }`}
-                      />
-                    ))}
+                  <div className="flex items-center gap-3">
                     <input
-                      type="text"
+                      type="color"
                       value={accentColor}
                       onChange={(e) => setAccentColor(e.target.value)}
-                      className="ml-2 w-24 px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-mono text-white text-center"
+                      className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
                     />
+                    <div className="flex items-center gap-2">
+                      {PRESET_COLORS.map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => setAccentColor(c)}
+                          style={{ backgroundColor: c }}
+                          className={`w-6 h-6 rounded-full transition-transform ${
+                            accentColor === c ? 'scale-125 ring-2 ring-white' : 'opacity-80 hover:opacity-100'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Submit & Cancel Buttons */}
+                {/* Submit Row */}
                 <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setIsEditorOpen(false)}
-                    className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold transition-all"
+                    className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E65A2B] to-[#FF7A45] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-orange-600/30 transition-all active:scale-[0.98]"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E65A2B] to-[#FF7A45] hover:opacity-95 text-white font-bold text-xs tracking-wider uppercase shadow-lg shadow-orange-600/30"
                   >
-                    {editingProjectId ? '✓ Save Changes' : '✓ Add Project'}
+                    {editingProjectId ? 'Save Changes' : 'Create Project'}
                   </button>
                 </div>
               </form>
@@ -1187,10 +1586,10 @@ export const AdminPanel: React.FC = () => {
               <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10">
                 <div>
                   <h3 className="text-xl font-bold text-white">
-                    {editingExpIndex !== null ? 'Edit Work Experience' : 'Add Work Experience'}
+                    {editingExpIndex !== null ? 'Edit Experience Dossier' : 'Add New Work Experience'}
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Updates the career dossier folder cards in the Work Experience section.
+                    Add or update your work experience, company, and key responsibility bullet points.
                   </p>
                 </div>
                 <button
@@ -1204,50 +1603,36 @@ export const AdminPanel: React.FC = () => {
               <form onSubmit={handleSaveExperience} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                      Job Role / Designation *
+                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                      Job Role *
                     </label>
                     <input
                       type="text"
-                      required
                       value={expRole}
                       onChange={(e) => setExpRole(e.target.value)}
                       placeholder="e.g. FULL STACK DEVELOPER"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
+                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
                       Company Name *
                     </label>
                     <input
                       type="text"
-                      required
                       value={expCompany}
                       onChange={(e) => setExpCompany(e.target.value)}
                       placeholder="e.g. LUX INDUSTRIES LIMITED"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm"
+                      required
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      value={expLocation}
-                      onChange={(e) => setExpLocation(e.target.value)}
-                      placeholder="e.g. Kolkata, India"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1.5 font-bold">
+                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
                       Period / Dates
                     </label>
                     <input
@@ -1255,42 +1640,55 @@ export const AdminPanel: React.FC = () => {
                       value={expPeriod}
                       onChange={(e) => setExpPeriod(e.target.value)}
                       placeholder="e.g. 11/2025 to Current"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-sm font-mono"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={expLocation}
+                      onChange={(e) => setExpLocation(e.target.value)}
+                      placeholder="e.g. Kolkata, India"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
                     />
                   </div>
                 </div>
 
-                {/* Bullet Points */}
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-mono uppercase text-gray-300 font-bold">
-                      Key Responsibilities & Achievements (Bullet Points) *
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-mono uppercase text-gray-400 font-bold">
+                      Key Highlights & Bullets
                     </label>
                     <button
                       type="button"
                       onClick={handleAddBulletRow}
-                      className="px-3 py-1 rounded-lg bg-white/10 hover:bg-[#E65A2B] text-white text-xs font-bold transition-all"
+                      className="text-xs font-mono text-[#FF7A45] hover:underline"
                     >
                       + Add Bullet
                     </button>
                   </div>
 
-                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  <div className="space-y-2.5">
                     {expBullets.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start gap-2">
-                        <span className="text-xs font-mono text-[#E65A2B] mt-2 shrink-0">•</span>
+                      <div key={bIdx} className="flex gap-2 items-start">
+                        <span className="text-xs font-mono text-gray-500 pt-2.5 shrink-0">
+                          {bIdx + 1}.
+                        </span>
                         <textarea
                           rows={2}
                           value={bullet}
                           onChange={(e) => handleUpdateBulletRow(e.target.value, bIdx)}
-                          placeholder={`Bullet point #${bIdx + 1} description...`}
-                          className="flex-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-[#E65A2B] text-xs leading-relaxed"
+                          placeholder="Describe key achievement, technology used, or metrics delivered..."
+                          className="flex-1 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs leading-relaxed focus:outline-none focus:border-[#E65A2B]"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveBulletRow(bIdx)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors mt-1"
-                          title="Remove bullet"
+                          className="p-2 text-gray-400 hover:text-red-400 text-xs"
+                          title="Remove Bullet"
                         >
                           ✕
                         </button>
@@ -1299,20 +1697,19 @@ export const AdminPanel: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Submit & Cancel */}
                 <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setIsExpEditorOpen(false)}
-                    className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold transition-all"
+                    className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E65A2B] to-[#FF7A45] hover:opacity-95 text-white text-xs font-bold uppercase tracking-wider shadow-lg shadow-orange-600/30 transition-all active:scale-[0.98]"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E65A2B] to-[#FF7A45] hover:opacity-95 text-white font-bold text-xs tracking-wider uppercase shadow-lg shadow-orange-600/30"
                   >
-                    {editingExpIndex !== null ? '✓ Save Experience' : '✓ Add Experience'}
+                    {editingExpIndex !== null ? 'Save Dossier' : 'Create Dossier'}
                   </button>
                 </div>
               </form>
@@ -1329,71 +1726,71 @@ export const AdminPanel: React.FC = () => {
           <div
             data-admin-panel="true"
             data-normal-cursor="true"
-            className="fixed inset-0 z-[130] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6"
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-2xl bg-[#18181B] border border-white/10 rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col max-h-[85vh]"
+              className="relative w-full max-w-3xl bg-[#18181B] border border-white/10 rounded-3xl shadow-2xl p-6 sm:p-8 max-h-[92vh] flex flex-col"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Export Generated Code</h3>
+                  <h3 className="text-xl font-bold text-white">Export TypeScript Code</h3>
                   <p className="text-xs text-gray-400">
-                    Copy or download code to paste into <code>src/data/portfolio.ts</code>.
+                    Copy and paste into <code className="text-[#FF7A45]">src/data/portfolio.ts</code> anytime you want to commit your edits into the repository git history.
                   </p>
                 </div>
                 <button
                   onClick={() => setIsExportOpen(false)}
-                  className="text-gray-400 hover:text-white p-1 rounded-full"
+                  className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* Export Tabs */}
+              {/* Subtabs: Projects vs Experiences */}
               <div className="flex gap-2 mb-3">
                 <button
                   onClick={() => setExportTab('projects')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold ${
                     exportTab === 'projects'
                       ? 'bg-[#E65A2B] text-white'
-                      : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                      : 'bg-white/5 text-gray-400 hover:text-white'
                   }`}
                 >
-                  Projects Code
+                  projectsData ({projects.length})
                 </button>
                 <button
                   onClick={() => setExportTab('experiences')}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold ${
                     exportTab === 'experiences'
                       ? 'bg-[#E65A2B] text-white'
-                      : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                      : 'bg-white/5 text-gray-400 hover:text-white'
                   }`}
                 >
-                  Work Experience Code
+                  experiencesData ({experiences.length})
                 </button>
               </div>
 
-              <div className="flex-1 overflow-hidden flex flex-col bg-black/50 rounded-2xl border border-white/10 p-3 mb-4">
-                <pre className="text-[11px] font-mono text-emerald-400 overflow-auto flex-1 p-2">
-                  {getActiveExportCode()}
-                </pre>
+              {/* Code Viewer */}
+              <div className="flex-1 bg-black/70 rounded-2xl p-4 border border-white/10 overflow-auto max-h-[50vh] font-mono text-xs text-gray-200">
+                <pre>{getActiveExportCode()}</pre>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              {/* Action Buttons */}
+              <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-end gap-3">
                 <button
                   onClick={handleDownloadCode}
-                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-all"
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-medium border border-white/10 flex items-center gap-1.5"
                 >
-                  Download .ts File
+                  <span>💾</span> Download .ts
                 </button>
                 <button
                   onClick={handleCopyExportCode}
-                  className="px-5 py-2 rounded-xl bg-[#E65A2B] hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md shadow-orange-600/30"
+                  className="px-5 py-2.5 rounded-xl bg-[#E65A2B] hover:bg-[#ff6937] text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md shadow-orange-600/30 flex items-center gap-1.5"
                 >
-                  {copiedExport ? '✓ Copied!' : 'Copy Code to Clipboard'}
+                  <span>{copiedExport ? '✓ Copied!' : '📋 Copy to Clipboard'}</span>
                 </button>
               </div>
             </motion.div>
@@ -1409,19 +1806,24 @@ export const AdminPanel: React.FC = () => {
           <div
             data-admin-panel="true"
             data-normal-cursor="true"
-            className="fixed inset-0 z-[130] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6"
+            className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-md bg-[#18181B] border border-white/10 rounded-3xl p-6 shadow-2xl"
+              className="relative w-full max-w-md bg-[#18181B] border border-white/10 rounded-3xl shadow-2xl p-6 sm:p-7"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-                <h3 className="text-base font-bold text-white">Change Admin Passcode</h3>
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Change Admin Passcode</h3>
+                  <p className="text-xs text-gray-400">
+                    Default is <code className="text-[#FF7A45]">admin2026</code>
+                  </p>
+                </div>
                 <button
                   onClick={() => setIsChangePinOpen(false)}
-                  className="text-gray-400 hover:text-white p-1 rounded-full"
+                  className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/10"
                 >
                   ✕
                 </button>
@@ -1429,36 +1831,36 @@ export const AdminPanel: React.FC = () => {
 
               <form onSubmit={handleChangePin} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-mono uppercase text-gray-400 mb-1">
+                  <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
                     Current Passcode
                   </label>
                   <input
                     type="password"
-                    required
                     value={oldPin}
                     onChange={(e) => setOldPin(e.target.value)}
-                    placeholder="Enter current passcode"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
+                    required
+                    placeholder="Enter old passcode"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase text-gray-400 mb-1">
-                    New Passcode (min 4 chars)
+                  <label className="block text-xs font-mono uppercase text-gray-400 mb-1 font-bold">
+                    New Passcode (min 4 characters)
                   </label>
                   <input
                     type="password"
-                    required
                     value={newPin}
                     onChange={(e) => setNewPin(e.target.value)}
+                    required
                     placeholder="Enter new passcode"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-[#E65A2B]"
                   />
                 </div>
 
                 {pinChangeMsg && (
                   <p
-                    className={`text-xs font-medium ${
+                    className={`text-xs font-mono ${
                       pinChangeMsg.isError ? 'text-red-400' : 'text-emerald-400'
                     }`}
                   >
@@ -1466,17 +1868,17 @@ export const AdminPanel: React.FC = () => {
                   </p>
                 )}
 
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="pt-3 border-t border-white/10 flex items-center justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => setIsChangePinOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold"
+                    className="px-4 py-2 rounded-xl bg-white/5 text-gray-300 text-xs"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-[#E65A2B] hover:bg-orange-600 text-white text-xs font-bold"
+                    className="px-5 py-2 rounded-xl bg-[#E65A2B] text-white font-bold text-xs uppercase"
                   >
                     Update Passcode
                   </button>
